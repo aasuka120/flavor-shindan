@@ -1,0 +1,19 @@
+# --- 戦略・調査ドキュメント(公開しない) ---
+STRATEGY.md
+RESEARCH_AND_IDEAS.md
+
+# --- Claude Code 関連(ローカル専用) ---
+.claude/
+
+# --- OS / エディタ ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+.vscode/
+.idea/
+
+# --- ログ・一時ファイル ---
+*.log
+.tmp/

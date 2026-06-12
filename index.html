@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>フレーバー診断｜あなたを“味”にたとえると？</title>
+<meta name="description" content="12のしつもん・約90秒で、あなたの味（フレーバー）を調合。全16味のどれになるかは、診断してからのお楽しみ。#フレーバー診断">
+<meta property="og:title" content="フレーバー診断｜あなたを“味”にたとえると？">
+<meta property="og:description" content="12のしつもん・約90秒で、あなたの味を調合します。全16味。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#fff8ec">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff3da' stroke='%233a2c23' stroke-width='7'/%3E%3Ctext x='50' y='67' font-size='46' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='%233a2c23'%3E味%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="marquee" aria-hidden="true"><div class="marquee-track" id="marqueeTrack"></div></div>
+
+<main class="container">
+
+  <!-- 共有リンクから来た人向けバナー（JSが中身を入れる） -->
+  <div id="viewerBanner" class="viewer-banner hidden"></div>
+
+  <!-- ===== Landing ===== -->
+  <section id="screen-landing" class="screen active">
+    <header class="hero">
+      <p class="hero-eyebrow">12のしつもんで、あなたの味を調合します</p>
+      <h1 class="logo" id="logo">フレーバー診断</h1>
+      <p class="hero-sub">あなたを<em>“味”</em>にたとえると？</p>
+      <div class="hero-chars" id="heroChars"></div>
+      <button class="btn btn-primary btn-big" id="btnStart">診断をはじめる</button>
+      <ul class="hero-badges">
+        <li>全12問</li>
+        <li>約90秒</li>
+        <li>登録なし・無料</li>
+      </ul>
+    </header>
+
+    <section class="menu-section" id="menuSection">
+      <h2 class="section-head"><span>フレーバーメニュー</span><small>ぜんぶで16味</small></h2>
+      <p class="menu-note">友だちや推しはどの味？ タップで味見できるよ</p>
+      <div class="menu-grid" id="menuGrid"></div>
+    </section>
+  </section>
+
+  <!-- ===== Quiz ===== -->
+  <section id="screen-quiz" class="screen">
+    <div class="quiz-head">
+      <button id="btnQuitQuiz" class="quiz-quit" aria-label="診断をやめる">×</button>
+      <div class="prog">
+        <div class="prog-top">
+          <span class="prog-label" id="progLabel">Q1 / 20</span>
+          <span class="prog-left" id="progLeft">あと19問</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        <p class="prog-hint" id="progHint">下ごしらえ中…</p>
+      </div>
+    </div>
+    <div class="q-card" id="qCard">
+      <p class="q-no" id="qNo">Q1</p>
+      <h2 class="q-text" id="qText"></h2>
+      <p class="q-help">どれくらい、あてはまる？</p>
+      <div class="scale" id="scaleRow">
+        <button class="scale-btn yes2" data-w="2"><span class="scale-dot"></span><span class="scale-lb">そう！</span></button>
+        <button class="scale-btn yes1" data-w="1"><span class="scale-dot"></span><span class="scale-lb">たぶんそう</span></button>
+        <button class="scale-btn mid" data-w="0"><span class="scale-dot"></span><span class="scale-lb">わからない</span></button>
+        <button class="scale-btn no1" data-w="-1"><span class="scale-dot"></span><span class="scale-lb">たぶんちがう</span></button>
+        <button class="scale-btn no2" data-w="-2"><span class="scale-dot"></span><span class="scale-lb">ちがう</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Loading（調合中） ===== -->
+  <section id="screen-loading" class="screen">
+    <div class="cooking">
+      <div class="cooking-pot">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <path class="steam s1" d="M76 52 Q70 38 78 26" fill="none" stroke="#3a2c23" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+          <path class="steam s2" d="M100 48 Q94 32 102 18" fill="none" stroke="#3a2c23" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+          <path class="steam s3" d="M124 52 Q118 38 126 26" fill="none" stroke="#3a2c23" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+          <path d="M44 96 Q40 158 100 160 Q160 158 156 96 Z" fill="#e0552f" stroke="#3a2c23" stroke-width="5"/>
+          <ellipse cx="100" cy="96" rx="58" ry="12" fill="#c44423" stroke="#3a2c23" stroke-width="5"/>
+          <ellipse cx="100" cy="82" rx="50" ry="13" fill="#fff8ec" stroke="#3a2c23" stroke-width="5"/>
+          <circle cx="100" cy="70" r="8" fill="#fff8ec" stroke="#3a2c23" stroke-width="5"/>
+          <ellipse cx="40" cy="108" rx="9" ry="6" fill="#e0552f" stroke="#3a2c23" stroke-width="4"/>
+          <ellipse cx="160" cy="108" rx="9" ry="6" fill="#e0552f" stroke="#3a2c23" stroke-width="4"/>
+          <circle cx="84" cy="120" r="4.5" fill="#fff8ec"/>
+          <circle cx="116" cy="120" r="4.5" fill="#fff8ec"/>
+          <path d="M92 132 Q100 139 108 132" fill="none" stroke="#fff8ec" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="cooking-msg" id="cookingMsg">あなたの素材を計量中…</p>
+    </div>
+  </section>
+
+  <!-- ===== Result ===== -->
+  <section id="screen-result" class="screen">
+    <p class="result-lead" id="resultLead">あなたのフレーバーは…</p>
+    <div id="cardMount"></div>
+    <div class="result-actions" id="resultActions"></div>
+    <div id="resultBody"></div>
+    <div class="result-footer-cta">
+      <button class="btn" id="btnRetry">もういちど診断する</button>
+      <button class="btn" id="btnMenu">ぜんぶの味をみる</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <p>※この診断はエンタメコンテンツです。科学的な性格分析ではありません。</p>
+  <p>© 2026 フレーバー診断 <span>#フレーバー診断</span></p>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<div class="modal hidden" id="imgModal">
+  <div class="modal-box">
+    <p class="modal-hint">画像を長押し（PCは右クリック）で保存できるよ</p>
+    <img id="imgModalPic" alt="診断結果カード">
+    <button class="btn" id="imgModalClose">とじる</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/card.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
