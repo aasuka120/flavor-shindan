@@ -4,16 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>フレーバー診断｜あなたを“味”にたとえると？</title>
-<meta name="description" content="12のしつもん・約90秒で、あなたの味（フレーバー）を調合。全16味のどれになるかは、診断してからのお楽しみ。#フレーバー診断">
+<meta name="description" content="性格を食べ物にたとえる診断。20のしつもん・約2分で、あなたの味（フレーバー）を16タイプから診断します。あなたはなに味？ #フレーバー診断">
+<link rel="canonical" href="https://flavor-shindan.pages.dev/">
+<!-- Open Graph -->
 <meta property="og:title" content="フレーバー診断｜あなたを“味”にたとえると？">
-<meta property="og:description" content="12のしつもん・約90秒で、あなたの味を調合します。全16味。">
+<meta property="og:description" content="20のしつもん・約2分で、あなたの味を調合します。全16味。あなたはなに味？">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://flavor-shindan.pages.dev/">
+<meta property="og:site_name" content="フレーバー診断">
+<meta property="og:locale" content="ja_JP">
+<!-- og:image はデプロイ後に /ogp.png(1200×630)を用意して有効化 -->
+<meta property="og:image" content="https://flavor-shindan.pages.dev/ogp.png">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="フレーバー診断｜あなたを“味”にたとえると？">
+<meta name="twitter:description" content="20のしつもん・約2分で、あなたの味を診断。あなたはなに味？ #フレーバー診断">
+<meta name="twitter:image" content="https://flavor-shindan.pages.dev/ogp.png">
 <meta name="theme-color" content="#fff8ec">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='44' fill='%23fff3da' stroke='%233a2c23' stroke-width='7'/%3E%3Ctext x='50' y='67' font-size='46' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='%233a2c23'%3E味%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<!-- フォントCSSを非ブロッキング読み込み(FCP短縮) -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Mochiy+Pop+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Mochiy+Pop+One&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Mochiy+Pop+One&display=swap"></noscript>
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
@@ -27,14 +42,14 @@
   <!-- ===== Landing ===== -->
   <section id="screen-landing" class="screen active">
     <header class="hero">
-      <p class="hero-eyebrow">12のしつもんで、あなたの味を調合します</p>
+      <p class="hero-eyebrow">20のしつもんで、あなたの味を調合します</p>
       <h1 class="logo" id="logo">フレーバー診断</h1>
       <p class="hero-sub">あなたを<em>“味”</em>にたとえると？</p>
       <div class="hero-chars" id="heroChars"></div>
       <button class="btn btn-primary btn-big" id="btnStart">診断をはじめる</button>
       <ul class="hero-badges">
-        <li>全12問</li>
-        <li>約90秒</li>
+        <li>全20問</li>
+        <li>約2分</li>
         <li>登録なし・無料</li>
       </ul>
     </header>
@@ -52,23 +67,32 @@
       <button id="btnQuitQuiz" class="quiz-quit" aria-label="診断をやめる">×</button>
       <div class="prog">
         <div class="prog-top">
-          <span class="prog-label" id="progLabel">Q1 / 20</span>
-          <span class="prog-left" id="progLeft">あと19問</span>
+          <span class="prog-label" id="progLabel"></span>
+          <span class="prog-left" id="progLeft"></span>
         </div>
-        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-track" id="progTrack" role="progressbar" aria-label="診断の進捗" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0">
+          <div class="prog-fill" id="progFill"></div>
+        </div>
         <p class="prog-hint" id="progHint">下ごしらえ中…</p>
       </div>
     </div>
-    <div class="q-card" id="qCard">
-      <p class="q-no" id="qNo">Q1</p>
-      <h2 class="q-text" id="qText"></h2>
-      <p class="q-help">どれくらい、あてはまる？</p>
-      <div class="scale" id="scaleRow">
-        <button class="scale-btn yes2" data-w="2"><span class="scale-dot"></span><span class="scale-lb">そう！</span></button>
-        <button class="scale-btn yes1" data-w="1"><span class="scale-dot"></span><span class="scale-lb">たぶんそう</span></button>
-        <button class="scale-btn mid" data-w="0"><span class="scale-dot"></span><span class="scale-lb">わからない</span></button>
-        <button class="scale-btn no1" data-w="-1"><span class="scale-dot"></span><span class="scale-lb">たぶんちがう</span></button>
-        <button class="scale-btn no2" data-w="-2"><span class="scale-dot"></span><span class="scale-lb">ちがう</span></button>
+    <div class="q-card" id="qCard" aria-live="polite">
+      <div class="q-card-top">
+        <button class="q-back" id="btnBack" hidden>← もどる</button>
+        <p class="q-no" id="qNo">Q1</p>
+      </div>
+      <h2 class="q-text" id="qText" tabindex="-1"></h2>
+      <p class="q-help" id="qHelp">どれくらい、あてはまる？</p>
+      <div class="scale" id="scaleRow" role="radiogroup" aria-labelledby="qText">
+        <span class="scale-anchor scale-anchor-y" aria-hidden="true">あてはまる</span>
+        <div class="scale-row-inner">
+          <button class="scale-btn yes2" data-w="2" role="radio" aria-checked="false" aria-label="そう！（とてもあてはまる）"><span class="scale-dot"></span><span class="scale-lb">そう！</span></button>
+          <button class="scale-btn yes1" data-w="1" role="radio" aria-checked="false" aria-label="たぶんそう"><span class="scale-dot"></span><span class="scale-lb">たぶんそう</span></button>
+          <button class="scale-btn mid" data-w="0" role="radio" aria-checked="false" aria-label="わからない・どちらでもない"><span class="scale-dot"></span><span class="scale-lb">わからない</span></button>
+          <button class="scale-btn no1" data-w="-1" role="radio" aria-checked="false" aria-label="たぶんちがう"><span class="scale-dot"></span><span class="scale-lb">たぶんちがう</span></button>
+          <button class="scale-btn no2" data-w="-2" role="radio" aria-checked="false" aria-label="ちがう（まったくあてはまらない）"><span class="scale-dot"></span><span class="scale-lb">ちがう</span></button>
+        </div>
+        <span class="scale-anchor scale-anchor-n" aria-hidden="true">あてはまらない</span>
       </div>
     </div>
   </section>
@@ -98,7 +122,7 @@
 
   <!-- ===== Result ===== -->
   <section id="screen-result" class="screen">
-    <p class="result-lead" id="resultLead">あなたのフレーバーは…</p>
+    <p class="result-lead" id="resultLead" aria-live="polite">あなたのフレーバーは…</p>
     <div id="cardMount"></div>
     <div class="result-actions" id="resultActions"></div>
     <div id="resultBody"></div>
@@ -117,7 +141,7 @@
 
 <div class="toast" id="toast" role="status"></div>
 
-<div class="modal hidden" id="imgModal">
+<div class="modal hidden" id="imgModal" role="dialog" aria-modal="true" aria-label="診断結果カード">
   <div class="modal-box">
     <p class="modal-hint">画像を長押し（PCは右クリック）で保存できるよ</p>
     <img id="imgModalPic" alt="診断結果カード">
@@ -125,8 +149,19 @@
   </div>
 </div>
 
-<script src="js/data.js"></script>
-<script src="js/card.js"></script>
-<script src="js/app.js"></script>
+<div class="modal hidden" id="quitModal" role="dialog" aria-modal="true" aria-labelledby="quitModalTitle">
+  <div class="modal-box">
+    <p class="modal-hint" id="quitModalTitle">ここでやめちゃう？</p>
+    <p class="quit-sub" id="quitModalSub">あと少しで、あなたの味がわかるよ。</p>
+    <div class="quit-actions">
+      <button class="btn btn-primary" id="quitContinue">つづける</button>
+      <button class="btn" id="quitConfirm">やめる</button>
+    </div>
+  </div>
+</div>
+
+<script defer src="js/data.js?v=2"></script>
+<script defer src="js/card.js?v=2"></script>
+<script defer src="js/app.js?v=2"></script>
 </body>
 </html>

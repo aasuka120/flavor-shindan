@@ -155,6 +155,21 @@
     ctx.strokeStyle = INK;
     ctx.stroke();
 
+    /* 2.5 フチ装飾：内枠の破線フレーム＋四隅ミニスター */
+    ctx.save();
+    rr(ctx, 64 + 22, 110 + 22, 952 - 44, 1700 - 44, 32);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(58,44,35,.55)';
+    ctx.setLineDash([10, 9]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = tint(type.color, 0.3);
+    star(ctx, 134, 180, 14);
+    star(ctx, 946, 180, 14);
+    star(ctx, 134, 1740, 14);
+    star(ctx, 946, 1740, 14);
+    ctx.restore();
+
     /* 3. マスキングテープ */
     drawTape(ctx, 255, 118, -18);
     drawTape(ctx, 840, 124, 15);
