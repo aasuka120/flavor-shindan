@@ -307,9 +307,17 @@
     $('resultLead').innerHTML = leadVisible +
       '<span class="sr-only">。あなたの結果は ' + t.name + '、' + t.catch + '</span>';
 
-    /* カード */
+    /* カード(レア度4%以下は当たり演出) */
+    var isRare = t.rarity <= 4;
+    var rareDeco = isRare
+      ? '<span class="card-rare-ribbon">★ RARE ★</span>' +
+        '<span class="spark sp1" aria-hidden="true">✦</span>' +
+        '<span class="spark sp2" aria-hidden="true">✧</span>' +
+        '<span class="spark sp3" aria-hidden="true">✦</span>'
+      : '';
     $('cardMount').innerHTML =
-      '<div class="card" style="--c:' + t.color + '">' +
+      '<div class="card' + (isRare ? ' rare' : '') + '" style="--c:' + t.color + '">' +
+        rareDeco +
         '<div class="card-inner">' +
           '<div class="card-banner">FLAVOR CHECK ✦ フレーバー診断</div>' +
           '<p class="card-lead">あなたのフレーバーは</p>' +
