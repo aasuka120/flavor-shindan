@@ -13,7 +13,7 @@ const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
 const ORIGIN = 'https://flavor-shindan.pages.dev';
 const ROOT = __dirname;
-const VER = '6';
+const VER = '7';
 
 // レア度ランキング(希少なほど上位)
 const RANKED = TYPE_ORDER.slice().sort((a, b) => TYPES[a].rarity - TYPES[b].rarity);
