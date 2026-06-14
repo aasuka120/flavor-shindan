@@ -1,0 +1,20 @@
+{
+  "name": "flavor-shindan",
+  "version": "1.0.0",
+  "description": "フレーバー診断 — あなたを“味”にたとえると？ Z世代向けバイラル診断サイト",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build.cjs",
+    "build:og": "node og-build.cjs",
+    "build:all": "node build.cjs && node og-build.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aasuka120/flavor-shindan.git"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.0"
+  }
+}

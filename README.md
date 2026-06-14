@@ -22,18 +22,33 @@
 index.html        画面の骨格(ランディング/クイズ/調合中/結果)
 css/style.css     デザイン一式(レトロ駄菓子パッケージ風デザインシステム)
 js/data.js        ★コンテンツの本体。質問・16タイプの全コピー・SVGキャラ・相性
-js/app.js         画面遷移・クイズ進行・結果ページ描画・シェア導線
+js/app.js         画面遷移・クイズ進行・結果ページ描画・シェア導線・計測
 js/card.js        保存用カード画像(1080×1920 PNG)のCanvas生成
+
+build.cjs         data.js → タイプ別静的ページ /t/{id}/ + sitemap/robots を生成
+og-build.cjs      data.js → OG画像 /ogp.png + /ogp/{id}.png を生成
+functions/api/ev.js  計測ビーコン受け口(Cloudflare Pages Function)
+
+t/{id}/index.html （生成物）共有プレビュー&SEO用のタイプ別ページ ×16
+ogp.png, ogp/*.png （生成物）OGP画像 ×17
+sitemap.xml, robots.txt, favicon.svg
 ```
 
 ## コンテンツを編集したいとき
 
-**すべて `js/data.js` だけで完結する。**
+**コピーやキャラは `js/data.js` だけで完結する。** 編集したら **静的ページとOG画像を再生成**すること(共有プレビュー/SEO用):
 
-- 質問を変える → `QUESTIONS`(各問は4軸のどれかに属する。`axis` と回答の軸文字を対応させること)
-- タイプのコピーを磨く → `TYPES.{id}` の `desc / manual / aruaru / love / friend / bestReason / worstRoast` など
+```powershell
+npm install      # 初回のみ(OG生成に @napi-rs/canvas を使用。devDependency / node_modules は非追跡)
+npm run build:all  # /t/ の16ページ + sitemap/robots + OG画像17枚 を再生成
+```
+
+- 質問を変える → `QUESTIONS`(各問は4軸のどれかに属する。`axis` と `dir` を対応させること)
+- タイプのコピーを磨く → `TYPES.{id}` の `desc / manual / aruaru / kuchiguse / meigen / chui / work / holiday / lucky / themesong / growWith / dryWith / love / friend / bestReason / worstRoast` など
 - キャラの見た目 → `TYPES.{id}.svg`(viewBox 200×200、線色 #3a2c23・線幅5で統一)
-- レア度% → `rarity`(16タイプ合計が100になるよう調整)
+- レア度% → `rarity`
+
+> 純粋にアプリを動かすだけ(`index.html`)はビルド不要。ビルドは「共有リンクのプレビュー」と「SEO」を最新化するためのもの。
 
 ## 診断ロジック
 

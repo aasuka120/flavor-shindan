@@ -866,3 +866,8 @@ const LOADING_MSGS = [
   'かくし味を追加中…',
   '盛り付けています…',
 ];
+
+/* Node(ビルドスクリプト)からも読めるように。ブラウザでは module が未定義なので無視される */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { AXES, QUESTIONS, TYPES, TYPE_ORDER, LOADING_MSGS, pairScore };
+}

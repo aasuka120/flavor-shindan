@@ -1,4 +1,6 @@
 # --- 戦略・調査ドキュメント(公開しない) ---
+LAUNCH_STRATEGY.md
+OVERVIEW.md
 STRATEGY.md
 RESEARCH_AND_IDEAS.md
 IMPROVEMENTS.md
@@ -14,6 +16,9 @@ desktop.ini
 *.swp
 .vscode/
 .idea/
+
+# --- 依存(ビルド用devツール) ---
+node_modules/
 
 # --- ログ・一時ファイル ---
 *.log

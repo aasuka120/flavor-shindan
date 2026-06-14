@@ -87,6 +87,7 @@
     closeModal('quitModal');
     showScreen('quiz');
     renderQuestion();
+    track('start');
   }
 
   function renderQuestion() {
@@ -187,6 +188,7 @@
     if (prev && prev !== id) lsSet('flavor_prev_type', prev);
     lsSet('flavor_my_type', id);
     lsSet('flavor_my_mix', JSON.stringify(mix));
+    track('finish', id);
     try { history.replaceState(null, '', '?t=' + id + '&me=1'); } catch (e) {}
 
     showScreen('loading');
@@ -490,17 +492,18 @@
         if (saving) return;
         saving = true;
         FlavorCard.save(t)
-          .then(function () { window.haptic([12, 30, 12]); toast('カード焼けた！🔥 ストーリーに貼ってね'); })
+          .then(function () { window.haptic([12, 30, 12]); track('save', t.id); toast('カード焼けた！🔥 ストーリーに貼ってね'); })
           .catch(function (e) { if (e && e.name !== 'AbortError') toast('うまく焼けなかった…もう一回試して！'); })
           .then(function () { saving = false; });
       });
     }
 
     function doShareX() {
+      track('share', t.id);
       var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
-      if (location.protocol.indexOf('http') === 0) url += '&url=' + encodeURIComponent(shareUrl());
+      if (location.protocol.indexOf('http') === 0) url += '&url=' + encodeURIComponent(shareUrl(t.id));
       var w = window.open(url, '_blank');
-      if (!w) copyText(shareText + '\n' + shareUrl(), 'シェア文をコピー！どこかに貼ってね');
+      if (!w) copyText(shareText + '\n' + shareUrl(t.id), 'シェア文をコピー！どこかに貼ってね');
     }
     var btnShareX = $('btnShareX');
     if (btnShareX) btnShareX.addEventListener('click', doShareX);
@@ -509,11 +512,13 @@
 
     var btnCopyLink = $('btnCopyLink');
     if (btnCopyLink) btnCopyLink.addEventListener('click', function () {
-      copyText(shareUrl(), 'リンクをコピー！LINEやストーリーに貼ってね');
+      track('share', t.id);
+      copyText(shareUrl(t.id), 'リンクをコピー！LINEやストーリーに貼ってね');
     });
     var naInvite = $('naInvite');
     if (naInvite) naInvite.addEventListener('click', function () {
-      copyText('この診断、あなたはなに味？→ ' + shareUrl() + ' #フレーバー診断', 'おさそい文をコピー！友だちに送ってね');
+      track('share', t.id);
+      copyText('この診断、あなたはなに味？→ ' + shareUrl(t.id) + ' #フレーバー診断', 'おさそい文をコピー！友だちに送ってね');
     });
 
     var btnCopyEmoji = $('btnCopyEmoji');
@@ -529,13 +534,19 @@
     });
   }
 
-  // 共有用URL(me=1を外し、?t= のみ)
-  function shareUrl() {
+  // 共有用URL: タイプ別の静的ページ /t/{id}/ を指す(SNSでプレビューが出る経路)
+  function shareUrl(id) {
+    if (location.protocol.indexOf('http') === 0) return location.origin + '/t/' + id + '/';
+    return location.href; // file:// 等のフォールバック
+  }
+
+  // 計測ビーコン(Cloudflare Functions /api/ev へ。未デプロイ環境では黙って失敗)
+  function track(ev, id) {
     try {
-      var u = new URL(location.href);
-      u.searchParams.delete('me');
-      return u.href;
-    } catch (e) { return location.href; }
+      var u = '/api/ev?e=' + encodeURIComponent(ev) + (id ? '&t=' + encodeURIComponent(id) : '');
+      if (navigator.sendBeacon) navigator.sendBeacon(u);
+      else { var img = new Image(); img.src = u; }
+    } catch (e) {}
   }
 
   /* ---------- パネル段階登場 ---------- */
@@ -597,6 +608,7 @@
     var mine = isMineHint && getMyType() === id;
     renderResult(id, { mine: mine, mix: mine ? getMyMix() : null });
     showScreen('result');
+    track('view', id);
     if (!mine) {
       var banner = $('viewerBanner');
       var rank = rarityRank(id);
