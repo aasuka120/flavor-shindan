@@ -93,7 +93,7 @@
       var toPos = p >= 50;
       return { letter: toPos ? pos : neg, pct: toPos ? p : 100 - p, pos: pos, neg: neg, posLabel: posLabel, negLabel: negLabel };
     }
-    var ei = part(sums[0], 10, 'E', 'I', '外向', '内向');
+    var ei = part(sums[1], 10, 'E', 'I', '外向', '内向'); // 温度軸(社交)=E/I
     var sn = part(sums[4], 10, 'S', 'N', '感覚', '直観');
     var tf = part(sums[2], 10, 'F', 'T', '感情', '思考');
     var jp = part(sums[3], 10, 'J', 'P', '計画', '臨機');
@@ -102,7 +102,7 @@
 
   // 味タイプから導かれるMBTI(S/Nは味では決まらないので2通り)。computeMbtiと同じ対応規則
   function flavorMbti(axes) {
-    var ei = axes.charAt(0) === 'C' ? 'E' : 'I';
+    var ei = axes.charAt(1) === 'H' ? 'E' : 'I'; // 温度: ホット=E / アイス=I
     var tf = axes.charAt(2) === 'S' ? 'F' : 'T';
     var jp = axes.charAt(3) === 'R' ? 'J' : 'P';
     return [ei + 'S' + tf + jp, ei + 'N' + tf + jp];

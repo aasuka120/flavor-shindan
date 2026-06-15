@@ -13,7 +13,7 @@ const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
 const ORIGIN = 'https://flavorshindan.com';
 const ROOT = __dirname;
-const VER = '12';
+const VER = '13';
 
 // レア度ランキング(希少なほど上位)
 const RANKED = TYPE_ORDER.slice().sort((a, b) => TYPES[a].rarity - TYPES[b].rarity);
@@ -28,7 +28,7 @@ function clip(s, n) {
 }
 // 味タイプから導かれるMBTI(S/Nは味では決まらないので2通り)。app.jsのflavorMbtiと同一規則
 function flavorMbti(axes) {
-  const ei = axes.charAt(0) === 'C' ? 'E' : 'I';
+  const ei = axes.charAt(1) === 'H' ? 'E' : 'I'; // 温度: ホット=E / アイス=I
   const tf = axes.charAt(2) === 'S' ? 'F' : 'T';
   const jp = axes.charAt(3) === 'R' ? 'J' : 'P';
   return [ei + 'S' + tf + jp, ei + 'N' + tf + jp];
