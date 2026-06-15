@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
-const ORIGIN = 'https://flavor-shindan.pages.dev';
+const ORIGIN = 'https://flavorshindan.com';
 const ROOT = __dirname;
 const VER = '7';
 

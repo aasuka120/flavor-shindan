@@ -37,7 +37,7 @@ GitHubリポジトリ: <https://github.com/aasuka120/flavor-shindan>
 https://flavor-shindan.pages.dev
 ```
 
-これが本番URLです。
+これはCloudflareが自動発行するデフォルトURL。**本番の公開URLは独自ドメイン `https://flavorshindan.com`**(下記「独自ドメイン」参照)。サイト内のcanonical / og:url / sitemap はすべて `flavorshindan.com` を指す。
 
 ---
 
@@ -57,9 +57,12 @@ git push
 
 ブランチを切ってPRを作ると、PRごとに **プレビューURL** が自動発行されます(例: `https://abc123.flavor-shindan.pages.dev`)。本番に影響せず動作確認できます。
 
-### 独自ドメインを後から付けたいとき
+### 独自ドメイン(`flavorshindan.com`)— 設定済み
 
-Cloudflare Pagesプロジェクトの「Custom domains」タブから追加できます。Cloudflareでドメインを買う(または既存ドメインをCloudflareに移管する)とDNS設定もワンクリックで完了します。
+本番は **`https://flavorshindan.com`** で公開中。Cloudflare Pagesプロジェクトの「Custom domains」タブで追加済み。
+
+- サイト内の正規URL(canonical / og:url / og:image / sitemap.xml / robots.txt)はすべて `flavorshindan.com` を指す(`build.cjs` の `ORIGIN`、`index.html` のメタ、`og-build.cjs` のフッター文字で統一)。
+- デフォルトの `flavor-shindan.pages.dev` も生きているが、SEO上の重複を避けるため **pages.dev → flavorshindan.com の301リダイレクト** をかけるのが望ましい。Pagesの静的`_redirects`はホスト名で出し分けできないため、ダッシュボードの **Rules → Redirect Rules**(または Bulk Redirects)で `*.pages.dev/*` → `https://flavorshindan.com/$1` を設定する(任意・推奨)。
 
 ---
 
@@ -83,7 +86,7 @@ npm run build:og    # /ogp.png + /ogp/{id}.png ×16 を再生成
 
 ## 計測(KPI)
 
-1. **トラフィック(最優先・コード不要)**: Cloudflare ダッシュボード → **Web Analytics** で `flavor-shindan.pages.dev` を追加 → Pagesドメインに自動注入(Cookieレス・無料)。PV・流入元・FCPが取れる。手動で入れる場合は `index.html` のコメント内 beacon の token を差し替えて有効化。
+1. **トラフィック(最優先・コード不要)**: Cloudflare ダッシュボード → **Web Analytics** で `flavorshindan.com` を追加 → Pagesドメインに自動注入(Cookieレス・無料)。PV・流入元・FCPが取れる。手動で入れる場合は `index.html` のコメント内 beacon の token を差し替えて有効化。
 2. **ファネルKPI(完走率・K係数)**: `functions/api/ev.js` が `start/finish/save/share/view` を受ける。**Analytics Engine** バインディングを有効化すると集計できる:
    - ダッシュボード Pages › Settings › Functions › Analytics Engine bindings に `FLAVOR_EV` = dataset `flavor_events` を追加
    - 完走率 = finish/start、保存率 = save/finish、K係数 ≈ (`/t/`流入のstart)/share

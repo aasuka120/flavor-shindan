@@ -135,7 +135,7 @@ async function drawType(t) {
   ctx.font = `700 32px ${FONT}`;
   ctx.fillText('あなたはなに味？ #フレーバー診断', cx, 478);
   ctx.fillStyle = 'rgba(58,44,35,.6)'; ctx.font = `700 24px ${FONT}`;
-  ctx.fillText('flavor-shindan.pages.dev', cx, 522);
+  ctx.fillText('flavorshindan.com', cx, 522);
 
   return canvas;
 }
@@ -168,7 +168,7 @@ async function drawDefault() {
   ctx.font = `700 27px ${FONT}`;
   ctx.fillText('全20問 ・ 約2分 ・ 登録なし ・ #フレーバー診断', 600, 492);
   ctx.fillStyle = 'rgba(58,44,35,.6)'; ctx.font = `700 24px ${FONT}`;
-  ctx.fillText('flavor-shindan.pages.dev', 600, 532);
+  ctx.fillText('flavorshindan.com', 600, 532);
   return canvas;
 }
 
