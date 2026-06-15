@@ -13,7 +13,7 @@ const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
 const ORIGIN = 'https://flavorshindan.com';
 const ROOT = __dirname;
-const VER = '10';
+const VER = '11';
 
 // レア度ランキング(希少なほど上位)
 const RANKED = TYPE_ORDER.slice().sort((a, b) => TYPES[a].rarity - TYPES[b].rarity);
@@ -25,6 +25,13 @@ function esc(s) {
 function clip(s, n) {
   s = String(s).replace(/\s+/g, '');
   return s.length > n ? s.slice(0, n) + '…' : s;
+}
+// 味タイプから導かれるMBTI(S/Nは味では決まらないので2通り)。app.jsのflavorMbtiと同一規則
+function flavorMbti(axes) {
+  const ei = axes.charAt(0) === 'C' ? 'E' : 'I';
+  const tf = axes.charAt(2) === 'S' ? 'F' : 'T';
+  const jp = axes.charAt(3) === 'R' ? 'J' : 'P';
+  return [ei + 'S' + tf + jp, ei + 'N' + tf + jp];
 }
 
 function cardHTML(t) {
@@ -66,7 +73,7 @@ function bodyPanels(t) {
       <div class="lucky-cell"><span class="lucky-k">行動</span><span class="lucky-v">${esc(t.lucky.action)}</span></div>
     </div>`, t.color);
   }
-  h += panel('この味に多いMBTI', `<div class="chips">${t.mbti.map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>`, t.color);
+  h += panel('この味に多いMBTI', `<div class="chips">${flavorMbti(t.axes).map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>`, t.color);
   return h;
 }
 
@@ -129,7 +136,7 @@ function pageHTML(t) {
   ${cardHTML(t)}
   <div class="tp-cta">
     <p class="tp-cta-head">あなたはなに味？🍴</p>
-    <a class="btn btn-primary btn-big" href="/">24問・約2分で診断する</a>
+    <a class="btn btn-primary btn-big" href="/">25問・約2分で診断する</a>
     <a class="btn" href="/?t=${t.id}">この味を詳しく見る</a>
   </div>
   ${bodyPanels(t)}

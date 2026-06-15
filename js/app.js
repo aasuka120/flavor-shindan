@@ -94,10 +94,18 @@
       return { letter: toPos ? pos : neg, pct: toPos ? p : 100 - p, pos: pos, neg: neg, posLabel: posLabel, negLabel: negLabel };
     }
     var ei = part(sums[0], 10, 'E', 'I', '外向', '内向');
-    var sn = part(sums[4], 8,  'S', 'N', '感覚', '直観');
+    var sn = part(sums[4], 10, 'S', 'N', '感覚', '直観');
     var tf = part(sums[2], 10, 'F', 'T', '感情', '思考');
     var jp = part(sums[3], 10, 'J', 'P', '計画', '臨機');
     return { type: ei.letter + sn.letter + tf.letter + jp.letter, parts: [ei, sn, tf, jp] };
+  }
+
+  // 味タイプから導かれるMBTI(S/Nは味では決まらないので2通り)。computeMbtiと同じ対応規則
+  function flavorMbti(axes) {
+    var ei = axes.charAt(0) === 'C' ? 'E' : 'I';
+    var tf = axes.charAt(2) === 'S' ? 'F' : 'T';
+    var jp = axes.charAt(3) === 'R' ? 'J' : 'P';
+    return [ei + 'S' + tf + jp, ei + 'N' + tf + jp];
   }
 
   /* ---------- クイズ ---------- */
@@ -476,11 +484,11 @@
       html += panel('あなたのMBTIっぽさ',
         '<div class="mbti-type">' + mbti.type + '</div>' +
         '<div class="mbti-bars">' + bars + '</div>' +
-        '<p class="chips-note">あなたの回答からの推定。この味に多いのは ' + t.mbti.join(' / ') + '。当たってたらシェアしてね🙏</p>', t.color);
+        '<p class="chips-note">あなたの回答からの推定。この味に多いのは ' + flavorMbti(t.axes).join(' / ') + '。当たってたらシェアしてね🙏</p>', t.color);
     } else {
       html += panel('この味に多いMBTI',
-        '<div class="chips">' + t.mbti.map(function (m) { return '<span class="chip">' + m + '</span>'; }).join('') + '</div>' +
-        '<p class="chips-note">※体感です。MBTI警察の方は見逃してください🙏</p>', t.color);
+        '<div class="chips">' + flavorMbti(t.axes).map(function (m) { return '<span class="chip">' + m + '</span>'; }).join('') + '</div>' +
+        '<p class="chips-note">※味タイプから推定。あなたの回答で診断すると4文字が出ます🙏</p>', t.color);
     }
 
     // ⑱ bio用おみやげ
