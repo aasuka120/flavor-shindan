@@ -20,6 +20,10 @@ desktop.ini
 # --- 依存(ビルド用devツール) ---
 node_modules/
 
+# --- 立ち絵確認用スクラッチ(ローカルのみ) ---
+render-check.cjs
+_check.png
+
 # --- ログ・一時ファイル ---
 *.log
 .tmp/
