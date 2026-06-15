@@ -85,7 +85,7 @@
     } catch (e) { return null; }
   }
 
-  // MBTI(回答から算出): E/I=濃さ(軸0) S/N=軸4(新規) T/F=後味(軸2) J/P=入手性(軸3)。温度(軸1)は不使用
+  // MBTI(回答から算出): E/I=温度(軸1=社交) S/N=軸4 T/F=後味(軸2) J/P=入手性(軸3)。濃さ(軸0)は味専用で不使用
   function computeMbti(sums) {
     function part(sum, max, pos, neg, posLabel, negLabel) {
       var p = Math.round((((sum || 0) + max) / (2 * max)) * 100);
