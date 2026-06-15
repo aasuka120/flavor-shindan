@@ -13,7 +13,7 @@ const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
 const ORIGIN = 'https://flavorshindan.com';
 const ROOT = __dirname;
-const VER = '8';
+const VER = '9';
 
 // レア度ランキング(希少なほど上位)
 const RANKED = TYPE_ORDER.slice().sort((a, b) => TYPES[a].rarity - TYPES[b].rarity);
@@ -139,7 +139,7 @@ function pageHTML(t) {
 
 <footer class="site-foot">
   <p>※この診断はエンタメコンテンツです。科学的な性格分析ではありません。</p>
-  <p>© 2026 フレーバー診断 <span>#フレーバー診断</span></p>
+  <p>© 2026 フレーバー診断 <span>#フレーバー診断</span> ・ <a href="/privacy/">プライバシーポリシー</a></p>
 </footer>
 </body>
 </html>

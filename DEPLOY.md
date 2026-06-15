@@ -87,10 +87,17 @@ npm run build:og    # /ogp.png + /ogp/{id}.png ×16 を再生成
 ## 計測(KPI)
 
 1. **トラフィック(最優先・コード不要)**: Cloudflare ダッシュボード → **Web Analytics** で `flavorshindan.com` を追加 → Pagesドメインに自動注入(Cookieレス・無料)。PV・流入元・FCPが取れる。手動で入れる場合は `index.html` のコメント内 beacon の token を差し替えて有効化。
-2. **ファネルKPI(完走率・K係数)**: `functions/api/ev.js` が `start/finish/save/share/view` を受ける。**Analytics Engine** バインディングを有効化すると集計できる:
-   - ダッシュボード Pages › Settings › Functions › Analytics Engine bindings に `FLAVOR_EV` = dataset `flavor_events` を追加
-   - 完走率 = finish/start、保存率 = save/finish、K係数 ≈ (`/t/`流入のstart)/share
-   - 未設定でも `/api/ev` は204を返すだけで無害(計測しないだけ)
+2. **ファネルKPI(完走率・K係数)— GA4 + Cloudflare 併用**: `app.js` の `track()` が、節目で同じイベントを **GA4(gtag)** と **`functions/api/ev.js`(Analytics Engine)** の両方に送る。送るイベント:
+   - `quiz_start` … 診断開始(完走率の分母)
+   - `quiz_complete` {flavor_type} … 診断完了
+   - `card_save` {flavor_type} … 結果カード保存
+   - `share` {flavor_type, method: x|link|invite} … シェア(チャネル別)
+   - `viewer_result` {flavor_type} … 友だちの共有リンクから結果を閲覧(K係数の分母)
+   - `viewer_start` {flavor_type} … その閲覧者が「自分も診断」(K係数の分子)
+   - `result_view` {flavor_type} … 自分の結果を再閲覧
+   - 主要KPI: **完走率 = quiz_complete / quiz_start**、**保存率 = card_save / quiz_complete**、**K入口の転換率 = viewer_start / viewer_result**
+   - GA4側では `quiz_complete` と `viewer_start` を「キーイベント」に指定すると追いやすい
+   - Cloudflare Analytics Engine を使う場合は Pages › Settings › Functions › Analytics Engine bindings に `FLAVOR_EV` = dataset `flavor_events` を追加(未設定でも `/api/ev` は204を返すだけで無害)
 
 ## トラブルシューティング
 

@@ -87,7 +87,7 @@
     closeModal('quitModal');
     showScreen('quiz');
     renderQuestion();
-    track('start');
+    track('quiz_start');
   }
 
   function renderQuestion() {
@@ -188,7 +188,7 @@
     if (prev && prev !== id) lsSet('flavor_prev_type', prev);
     lsSet('flavor_my_type', id);
     lsSet('flavor_my_mix', JSON.stringify(mix));
-    track('finish', id);
+    track('quiz_complete', id);
     try { history.replaceState(null, '', '?t=' + id + '&me=1'); } catch (e) {}
 
     showScreen('loading');
@@ -500,14 +500,14 @@
         if (saving) return;
         saving = true;
         FlavorCard.save(t)
-          .then(function () { window.haptic([12, 30, 12]); track('save', t.id); toast('カード焼けた！🔥 ストーリーに貼ってね'); })
+          .then(function () { window.haptic([12, 30, 12]); track('card_save', t.id); toast('カード焼けた！🔥 ストーリーに貼ってね'); })
           .catch(function (e) { if (e && e.name !== 'AbortError') toast('うまく焼けなかった…もう一回試して！'); })
           .then(function () { saving = false; });
       });
     }
 
     function doShareX() {
-      track('share', t.id);
+      track('share', t.id, { method: 'x' });
       var url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
       if (location.protocol.indexOf('http') === 0) url += '&url=' + encodeURIComponent(shareUrl(t.id));
       var w = window.open(url, '_blank');
@@ -520,12 +520,12 @@
 
     var btnCopyLink = $('btnCopyLink');
     if (btnCopyLink) btnCopyLink.addEventListener('click', function () {
-      track('share', t.id);
+      track('share', t.id, { method: 'link' });
       copyText(shareUrl(t.id), 'リンクをコピー！LINEやストーリーに貼ってね');
     });
     var naInvite = $('naInvite');
     if (naInvite) naInvite.addEventListener('click', function () {
-      track('share', t.id);
+      track('share', t.id, { method: 'invite' });
       copyText('この診断、あなたはなに味？→ ' + shareUrl(t.id) + ' #フレーバー診断', 'おさそい文をコピー！友だちに送ってね');
     });
 
@@ -535,7 +535,7 @@
     });
 
     var btnViewerStart = $('btnViewerStart');
-    if (btnViewerStart) btnViewerStart.addEventListener('click', startQuiz);
+    if (btnViewerStart) btnViewerStart.addEventListener('click', function () { track('viewer_start', t.id); startQuiz(); });
 
     $('resultBody').querySelectorAll('.pair-link, .compat-row, .flavor-nav-btn').forEach(function (b) {
       b.addEventListener('click', function () { viewType(b.dataset.type); });
@@ -549,7 +549,7 @@
   }
 
   // 計測ビーコン(Cloudflare Functions /api/ev へ。未デプロイ環境では黙って失敗)
-  function track(ev, id) {
+  function track(ev, id, extra) {
     try {
       var u = '/api/ev?e=' + encodeURIComponent(ev) + (id ? '&t=' + encodeURIComponent(id) : '');
       if (navigator.sendBeacon) navigator.sendBeacon(u);
@@ -558,7 +558,10 @@
     // GA4 にも同じファネルイベントを送る(gtag未読込なら黙ってスキップ)
     try {
       if (typeof window.gtag === 'function') {
-        window.gtag('event', ev, id ? { flavor_type: id } : {});
+        var p = {};
+        if (id) p.flavor_type = id;
+        if (extra) { for (var k in extra) { if (extra.hasOwnProperty(k)) p[k] = extra[k]; } }
+        window.gtag('event', ev, p);
       }
     } catch (e) {}
   }
@@ -622,7 +625,7 @@
     var mine = isMineHint && getMyType() === id;
     renderResult(id, { mine: mine, mix: mine ? getMyMix() : null });
     showScreen('result');
-    track('view', id);
+    track(mine ? 'result_view' : 'viewer_result', id);
     if (!mine) {
       var banner = $('viewerBanner');
       var rank = rarityRank(id);
@@ -630,7 +633,7 @@
         '<p>友だちは「<b>' + TYPES[id].name + '</b>」だったみたい。<br>全国の' + TYPES[id].rarity + '%（レア度' + rank + '位）。<br>じゃあ、あなたはなに味？</p>' +
         '<button class="btn btn-primary" id="btnViewerStartTop">私の味を診断する（約2分）</button>';
       banner.classList.remove('hidden');
-      $('btnViewerStartTop').addEventListener('click', startQuiz);
+      $('btnViewerStartTop').addEventListener('click', function () { track('viewer_start', id); startQuiz(); });
     }
   }
 
