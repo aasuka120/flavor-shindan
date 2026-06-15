@@ -514,9 +514,6 @@
         '</div>', t.color);
     }
 
-    // ⑭ テーマソング
-    if (t.themesong) html += panel('テーマソング感', '<p class="panel-para themesong">♪ ' + t.themesong + '</p>', t.color);
-
     // ⑮ 注意報
     if (t.chui) html += panel('⚠ 注意報', '<p class="chui">' + t.chui + '</p>', t.color, 'panel-chui');
 
