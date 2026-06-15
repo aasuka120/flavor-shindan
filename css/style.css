@@ -1370,3 +1370,12 @@ a{ color:var(--ink); }
 .kakushi li{ position:relative; padding:9px 12px 9px 30px; font-size:13px; line-height:1.6; background:var(--paper); border-radius:10px; margin-bottom:8px; }
 .kakushi li:last-child{ margin-bottom:0; }
 .kakushi li::before{ content:'隠'; position:absolute; left:9px; top:9px; font-family:'Mochiy Pop One',sans-serif; font-size:11px; color:var(--red); }
+
+/* ===== 図鑑: 未解禁マスク ===== */
+.menu-item{ position:relative; }
+.menu-item.locked{ background:var(--paper); cursor:default; }
+.menu-item.locked:hover{ transform:none; background:var(--paper); }
+.menu-item.locked .menu-char svg{ filter:brightness(0); opacity:.18; }
+.menu-item.locked .menu-name{ opacity:.55; letter-spacing:3px; }
+.menu-item.locked .menu-rar{ opacity:.4; }
+.lock-badge{ position:absolute; top:4px; right:6px; font-size:13px; opacity:.7; z-index:1; }

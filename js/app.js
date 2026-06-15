@@ -53,6 +53,7 @@
     document.body.classList.toggle('on-result', name === 'result');
     document.body.classList.toggle('on-quiz', name === 'quiz');
     if (name !== 'loading') cancelLoadTimers();
+    if (name === 'landing') renderMenu();
     window.scrollTo(0, 0);
   }
 
@@ -83,6 +84,47 @@
       if (m && typeof m.type === 'string' && Array.isArray(m.parts)) return m;
       return null;
     } catch (e) { return null; }
+  }
+
+  /* ---------- 図鑑(コレクション) ---------- */
+  function getDex() {
+    try { var d = JSON.parse(lsGet('flavor_dex')); return Array.isArray(d) ? d : []; } catch (e) { return []; }
+  }
+  // 解禁は「自分の診断」or「友だちから届いたリンク(?t= / ?g=)」のときだけ。新規ならtrue
+  function addToDex(id) {
+    if (!TYPES[id]) return false;
+    var d = getDex();
+    if (d.indexOf(id) !== -1) return false;
+    d.push(id);
+    lsSet('flavor_dex', JSON.stringify(d));
+    return true;
+  }
+  // 図鑑メニュー描画(未解禁はシルエットでマスク)
+  function renderMenu() {
+    var mg = $('menuGrid');
+    if (!mg) return;
+    var dex = getDex();
+    mg.innerHTML = TYPE_ORDER.map(function (tid) {
+      var t = TYPES[tid];
+      if (dex.indexOf(tid) === -1) {
+        return '<button class="menu-item locked" data-type="' + tid + '" aria-label="未解禁の味">' +
+          '<span class="lock-badge" aria-hidden="true">🔒</span>' +
+          '<span class="menu-char" aria-hidden="true">' + t.svg + '</span>' +
+          '<span class="menu-name">？？？</span>' +
+          '<span class="menu-rar">' + t.rarity + '%</span>' +
+          '</button>';
+      }
+      var tier = t.rarity < 4 ? ' rare-ss' : (t.rarity < 6 ? ' rare-s' : '');
+      var rareLabel = t.rarity < 4 ? '<span class="rare-flag" aria-hidden="true">RARE</span>' : '';
+      return '<button class="menu-item' + tier + '" data-type="' + tid + '" style="--c:' + t.color + '" aria-label="' + t.name + 'をみる">' +
+        rareLabel +
+        '<span class="menu-char" aria-hidden="true">' + t.svg + '</span>' +
+        '<span class="menu-name">' + t.short + '</span>' +
+        '<span class="menu-rar">' + t.rarity + '%</span>' +
+        '</button>';
+    }).join('');
+    var prog = $('dexProg');
+    if (prog) prog.textContent = 'あつめた味 ' + dex.length + ' / 16 ・ 自分の診断と、友だちから届いたリンクで解禁';
   }
 
   // MBTI(回答から算出): E/I=温度(軸1=社交) S/N=軸4 T/F=後味(軸2) J/P=入手性(軸3)。濃さ(軸0)は味専用で不使用
@@ -223,6 +265,7 @@
     lsSet('flavor_my_type', id);
     lsSet('flavor_my_mix', JSON.stringify(mix));
     lsSet('flavor_my_mbti', JSON.stringify(mbti));
+    addToDex(id); // 自分の診断で解禁
     track('quiz_complete', id);
     try { history.replaceState(null, '', '?t=' + id + '&me=1'); } catch (e) {}
 
@@ -744,6 +787,7 @@
     showScreen('result');
     track(mine ? 'result_view' : 'viewer_result', id);
     if (!mine) {
+      if (addToDex(id)) toast('「' + TYPES[id].name + '」を図鑑に追加！'); // 友だちのリンクで解禁
       var banner = $('viewerBanner');
       var rank = rarityRank(id);
       banner.innerHTML =
@@ -803,6 +847,7 @@
     showScreen('result');
     try { window.scrollTo(0, 0); } catch (e) {}
     var t = TYPES[answerId];
+    if (addToDex(answerId)) setTimeout(function () { toast('「' + t.name + '」を図鑑に追加！'); }, 700); // 当てゲームで解禁
     var guessName = TYPES[guessId] ? TYPES[guessId].short : '';
     var banner = $('viewerBanner');
     if (banner) {
@@ -854,25 +899,22 @@
       return '<div class="hero-char" aria-hidden="true" style="--d:' + delays[j] + '">' + TYPES[hid].svg + '</div>';
     }).join('');
 
-    // メニュー(レア度で視覚序列化)
+    // 図鑑メニュー(自分の味は解禁済みに移行 → 描画はrenderMenu)
+    var myT = getMyType();
+    if (myT) addToDex(myT);
     var mg = $('menuGrid');
     if (mg) {
-      mg.innerHTML = TYPE_ORDER.map(function (tid) {
-        var t = TYPES[tid];
-        var tier = t.rarity < 4 ? ' rare-ss' : (t.rarity < 6 ? ' rare-s' : '');
-        var rareLabel = t.rarity < 4 ? '<span class="rare-flag" aria-hidden="true">RARE</span>' : '';
-        return '<button class="menu-item' + tier + '" data-type="' + tid + '" style="--c:' + t.color + '" aria-label="' + t.name + 'をみる">' +
-          rareLabel +
-          '<span class="menu-char" aria-hidden="true">' + t.svg + '</span>' +
-          '<span class="menu-name">' + t.short + '</span>' +
-          '<span class="menu-rar">' + t.rarity + '%</span>' +
-          '</button>';
-      }).join('');
       mg.addEventListener('click', function (ev) {
         var btn = ev.target.closest('.menu-item');
-        if (btn) viewType(btn.dataset.type);
+        if (!btn) return;
+        if (btn.classList.contains('locked')) {
+          toast('未解禁！自分で診断するか、友だちから届いたリンクで解禁してね');
+          return;
+        }
+        viewType(btn.dataset.type);
       });
     }
+    renderMenu();
 
     // 固定ボタン
     bind($('btnStart'), 'click', startQuiz);
