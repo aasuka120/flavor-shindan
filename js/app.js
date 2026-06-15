@@ -555,6 +555,12 @@
       if (navigator.sendBeacon) navigator.sendBeacon(u);
       else { var img = new Image(); img.src = u; }
     } catch (e) {}
+    // GA4 にも同じファネルイベントを送る(gtag未読込なら黙ってスキップ)
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', ev, id ? { flavor_type: id } : {});
+      }
+    } catch (e) {}
   }
 
   /* ---------- パネル段階登場 ---------- */
