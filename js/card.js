@@ -127,7 +127,7 @@
     ctx.fillText(name, sx + symW + gap, 1642, maxName);
   }
 
-  function draw(ctx, type, img, best, worst) {
+  function draw(ctx, type, img, best, worst, personal) {
     var i, a;
 
     /* 1. 背景：タイプ色＋白水玉 */
@@ -284,6 +284,19 @@
     ctx.fillStyle = '#ffffff';
     ctx.fillText(catchText, 540, 1132);
 
+    /* 10.5 パーソナル一行（本人の回答から：MBTI＋トップ2ステータス） */
+    if (personal && personal.mbti) {
+      var pst = personal.stats || {};
+      var pkeys = Object.keys(pst).sort(function (a2, b2) { return pst[b2] - pst[a2]; }).slice(0, 2);
+      var pline = 'MBTIっぽさ ' + personal.mbti;
+      if (pkeys.length >= 2) pline += ' ・ ' + pkeys[0] + pst[pkeys[0]] + '% ・ ' + pkeys[1] + pst[pkeys[1]] + '%';
+      ctx.font = '700 26px "Zen Maru Gothic"';
+      ctx.fillStyle = 'rgba(58,44,35,.72)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pline, 540, 1192, 880);
+    }
+
     /* 11. 特徴3行 */
     ctx.font = '900 30px "Zen Maru Gothic"';
     ctx.fillStyle = 'rgba(58,44,35,.7)';
@@ -348,7 +361,7 @@
   }
 
   // 何度呼んでも安全：毎回新しいcanvasを返す
-  async function build(type) {
+  async function build(type, personal) {
     var best = lookup(type.bestId);
     var worst = lookup(type.worstId);
     await loadFonts(type, best, worst);
@@ -357,13 +370,13 @@
     canvas.width = W;
     canvas.height = H;
     var ctx = canvas.getContext('2d');
-    draw(ctx, type, img, best, worst);
+    draw(ctx, type, img, best, worst, personal);
     return canvas;
   }
 
-  async function save(type) {
+  async function save(type, personal) {
     if (typeof window.toast === 'function') window.toast('カードを焼いてます…');
-    var canvas = await build(type);
+    var canvas = await build(type, personal);
     var blob = await new Promise(function (resolve, reject) {
       canvas.toBlob(function (b) {
         if (b) resolve(b);

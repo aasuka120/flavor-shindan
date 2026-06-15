@@ -325,6 +325,48 @@
       '</div>';
   }
 
+  /* ---------- パーソナライズ(配合レシピ・ギャップ・本人ステータス) ---------- */
+  // 回答の mix(4軸%) から、一人ひとり違う結果を算出
+  function personalize(id, mix, mbti) {
+    var t = TYPES[id];
+    function cl(v) { return Math.max(0, Math.min(100, Math.round(v))); }
+    var c = mix[0], h = mix[1], s = mix[2], r = mix[3]; // こってり%, ホット%, 甘口%, 定番%
+    // 本人ステータス(軸を混ぜて純粋な逆数を避ける。キーは t.stats と同じ5項目)
+    var stats = {
+      'ノリ': cl(h),
+      'やさしさ': cl(s * 0.7 + c * 0.3),
+      '毒': cl((100 - s) * 0.7 + (100 - h) * 0.3),
+      '愛の重さ': cl(c * 0.7 + s * 0.3),
+      '気まぐれ': cl(100 - r)
+    };
+    // 配合レシピ: 50%に近い(=ゆらいでる)軸を反転して隣接タイプを「隠し味」に
+    var order = [0, 1, 2, 3].sort(function (a, b) { return Math.abs(mix[a] - 50) - Math.abs(mix[b] - 50); });
+    function flip(code, ai) {
+      var ax = AXES[ai], arr = code.split('');
+      arr[ai] = (arr[ai] === ax.a[1]) ? ax.b[1] : ax.a[1];
+      return arr.join('');
+    }
+    function byCode(code) { var f = null; Object.keys(TYPES).forEach(function (k) { if (TYPES[k].axes === code) f = k; }); return f; }
+    var sec = TYPES[byCode(flip(t.axes, order[0]))];
+    var pin = TYPES[byCode(flip(t.axes, order[1]))];
+    var purity = (Math.abs(c - 50) + Math.abs(h - 50) + Math.abs(s - 50) + Math.abs(r - 50)) / 4 / 50;
+    var baseP = cl(58 + purity * 34);
+    var secP = cl((100 - baseP) * 0.62);
+    var pinP = cl(100 - baseP - secP);
+    var recipe = { base: t.short, baseP: baseP, sec: sec ? sec.short : '', secP: secP, pin: pin ? pin.short : '', pinP: pinP };
+    // ギャップ: 拮抗軸の二面性 + クロス特徴(本人の回答パターン)
+    var gaps = [];
+    var n0 = order[0];
+    if (Math.abs(mix[n0] - 50) <= 8) gaps.push('「' + AXES[n0].a[0] + '」と「' + AXES[n0].b[0] + '」がほぼ半々。日によって二面性が出るタイプ。');
+    if (s < 42 && c > 60) gaps.push('辛口なのに情は濃いめ。口は悪いけど、見捨てない人。');
+    if (c > 60 && h < 42) gaps.push('内に熱を秘めるタイプ。表ではクール、内側はあつい。');
+    if (s > 60 && r < 42) gaps.push('優しいのに気まぐれ。甘えさせてくれるけど、つかめない。');
+    if (h > 60 && r > 60) gaps.push('ノリよく見えて、実はしっかり計画派。そのギャップで好かれる。');
+    if (h < 40 && r < 40) gaps.push('物静かなのに、行動は急に思いつき。読めなさが魅力。');
+    if (!gaps.length) gaps.push('全軸そこそこのバランス型。どんな味とも合わせやすい万能フレーバー。');
+    return { stats: stats, recipe: recipe, gaps: gaps.slice(0, 2) };
+  }
+
   /* ---------- 結果描画 ---------- */
   function renderResult(id, opts) {
     if (!TYPES[id]) { toast('うまく調理できなかった…もう一回！'); showScreen('landing'); return; }
@@ -335,6 +377,7 @@
     var best = TYPES[t.bestId] || t;
     var worst = TYPES[t.worstId] || t;
     var rank = rarityRank(id);
+    var personal = (mine && mix) ? personalize(id, mix, mbti) : null;
 
     updateMeta(t, mine);
 
@@ -385,6 +428,20 @@
     // ① こんな味
     html += panel('こんな味', t.desc.map(para).join(''), t.color);
 
+    // A 配合レシピ / C ギャップ(本人の回答からのパーソナライズ)
+    if (personal) {
+      var rc = personal.recipe;
+      html += panel('あなたの配合レシピ',
+        '<div class="recipe">' +
+          '<div class="recipe-row"><span class="recipe-amt">ベース</span><span class="recipe-flavor">' + rc.base + '</span><span class="recipe-pct">' + rc.baseP + '%</span></div>' +
+          (rc.sec ? '<div class="recipe-row"><span class="recipe-amt">隠し味</span><span class="recipe-flavor">' + rc.sec + '</span><span class="recipe-pct">' + rc.secP + '%</span></div>' : '') +
+          (rc.pin ? '<div class="recipe-row"><span class="recipe-amt">ひとつまみ</span><span class="recipe-flavor">' + rc.pin + '</span><span class="recipe-pct">' + rc.pinP + '%</span></div>' : '') +
+          '<p class="recipe-note">同じ味でも、配合は人それぞれ。これがあなただけのレシピ。</p>' +
+        '</div>', t.color);
+      html += panel('ギャップ',
+        '<ul class="kakushi">' + personal.gaps.map(function (g) { return '<li>' + g + '</li>'; }).join('') + '</ul>', t.color);
+    }
+
     // ② 口ぐせ
     if (t.kuchiguse && t.kuchiguse.length) {
       html += panel('口ぐせ',
@@ -399,11 +456,12 @@
         '<blockquote class="meigen">' + t.meigen + '<span class="meigen-stamp" aria-hidden="true">味</span></blockquote>', t.color);
     }
 
-    // ④ せいぶん表示
+    // ④ せいぶん表示(本人は回答から算出、閲覧者はタイプ標準値)
+    var statsObj = personal ? personal.stats : t.stats;
     html += panel('せいぶん表示',
-      '<p class="seibun-note">栄養成分表示（あなた1人あたり）</p>' +
-      Object.keys(t.stats).map(function (k) {
-        var v = t.stats[k];
+      '<p class="seibun-note">' + (personal ? '栄養成分表示（あなたの回答から算出）' : '栄養成分表示（あなた1人あたり）') + '</p>' +
+      Object.keys(statsObj).map(function (k) {
+        var v = statsObj[k];
         return '<div class="stat"><span class="stat-name">' + k + '</span>' +
           '<div class="stat-track" role="img" aria-label="' + k + ' ' + v + '%"><div class="stat-fill" style="width:' + v + '%"></div></div>' +
           '<span class="stat-val">' + v + '%</span></div>';
@@ -538,12 +596,12 @@
 
     $('resultBody').innerHTML = html;
 
-    bindResultEvents(t, mix, mine);
+    bindResultEvents(t, mix, mine, personal ? { mbti: mbti ? mbti.type : '', stats: personal.stats } : null);
     revealPanels();
   }
 
   /* ---------- 結果ページのイベント接続 ---------- */
-  function bindResultEvents(t, mix, mine) {
+  function bindResultEvents(t, mix, mine, cardData) {
     var shareText = buildShareText(t, mix);
 
     var btnSave = $('btnSave');
@@ -552,7 +610,7 @@
       btnSave.addEventListener('click', function () {
         if (saving) return;
         saving = true;
-        FlavorCard.save(t)
+        FlavorCard.save(t, cardData)
           .then(function () { window.haptic([12, 30, 12]); track('card_save', t.id); toast('カード焼けた！🔥 ストーリーに貼ってね'); })
           .catch(function (e) { if (e && e.name !== 'AbortError') toast('うまく焼けなかった…もう一回試して！'); })
           .then(function () { saving = false; });

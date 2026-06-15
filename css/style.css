@@ -1358,3 +1358,15 @@ a{ color:var(--ink); }
 .guess-title{ font-family:'Mochiy Pop One',sans-serif; font-size:24px; margin:2px 0 6px; }
 .guess-sub{ font-size:13px; opacity:.8; }
 .guess-verdict{ font-family:'Mochiy Pop One',sans-serif; font-size:22px; text-align:center; margin-bottom:4px; }
+
+/* ===== パーソナライズ: 配合レシピ / ギャップ ===== */
+.recipe-row{ display:grid; grid-template-columns:72px 1fr auto; align-items:center; gap:10px; padding:9px 0; border-bottom:2px dotted rgba(58,44,35,.22); }
+.recipe-row:last-of-type{ border-bottom:none; }
+.recipe-amt{ font-family:'Mochiy Pop One',sans-serif; font-size:11px; color:var(--red); }
+.recipe-flavor{ font-weight:900; font-size:15px; }
+.recipe-pct{ font-family:'Mochiy Pop One',sans-serif; font-size:17px; }
+.recipe-note{ font-size:11px; opacity:.7; margin-top:10px; }
+.kakushi{ list-style:none; padding:0; margin:0; }
+.kakushi li{ position:relative; padding:9px 12px 9px 30px; font-size:13px; line-height:1.6; background:var(--paper); border-radius:10px; margin-bottom:8px; }
+.kakushi li:last-child{ margin-bottom:0; }
+.kakushi li::before{ content:'隠'; position:absolute; left:9px; top:9px; font-family:'Mochiy Pop One',sans-serif; font-size:11px; color:var(--red); }
