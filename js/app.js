@@ -509,13 +509,11 @@
         AXES.map(function (ax, i) {
           var pa = mix[i], pb = 100 - pa;
           return '<div class="gohai-row2">' +
-            '<div class="gohai-axhead"><b>' + ax.key + '</b>' + (ax.head ? '<span class="gohai-axmean">' + ax.head + '</span>' : '') + '</div>' +
             '<div class="gohai-labels">' +
               '<span class="' + (pa < 50 ? 'lose' : '') + '">' + ax.a[0] + ' ' + pa + '%</span>' +
               '<span class="' + (pb < 50 ? 'lose' : '') + '">' + ax.b[0] + ' ' + pb + '%</span>' +
             '</div>' +
             '<div class="gohai-bar"><div class="gohai-fill" style="width:' + pa + '%"></div></div>' +
-            (ax.desc ? '<p class="gohai-axdesc">' + ax.desc + '</p>' : '') +
             '</div>';
         }).join('') + retake +
         '<p class="gohai-note">ゲージが寄っているほど、その味が濃いめ。50%ぎりぎりの軸は、日によって変わるかも。</p>', t.color);

@@ -1358,10 +1358,3 @@ a{ color:var(--ink); }
 .guess-title{ font-family:'Mochiy Pop One',sans-serif; font-size:24px; margin:2px 0 6px; }
 .guess-sub{ font-size:13px; opacity:.8; }
 .guess-verdict{ font-family:'Mochiy Pop One',sans-serif; font-size:22px; text-align:center; margin-bottom:4px; }
-
-/* ===== 配合: 各軸の説明 ===== */
-.gohai-row2{ margin-bottom:16px; }
-.gohai-axhead{ display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
-.gohai-axhead b{ font-family:'Mochiy Pop One',sans-serif; font-size:14px; color:var(--ink); }
-.gohai-axmean{ font-size:11px; font-weight:700; opacity:.65; }
-.gohai-axdesc{ font-size:11px; line-height:1.5; opacity:.75; margin-top:5px; }
