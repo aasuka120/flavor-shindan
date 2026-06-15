@@ -1351,3 +1351,10 @@ a{ color:var(--ink); }
 .mbti-pole b{ color:var(--c,#e0552f); font-size:13px; }
 .mbti-track{ position:relative; display:block; height:13px; background:var(--paper); border:2px solid var(--ink); border-radius:8px; overflow:hidden; }
 .mbti-fill{ position:absolute; top:0; bottom:0; display:block; background:var(--c,#e0552f); }
+
+/* ===== 当てゲーム ===== */
+.guess-head{ text-align:center; margin:20px 0 14px; }
+.guess-eyebrow{ font-family:'Mochiy Pop One',sans-serif; font-size:13px; color:var(--red); margin-bottom:6px; }
+.guess-title{ font-family:'Mochiy Pop One',sans-serif; font-size:24px; margin:2px 0 6px; }
+.guess-sub{ font-size:13px; opacity:.8; }
+.guess-verdict{ font-family:'Mochiy Pop One',sans-serif; font-size:22px; text-align:center; margin-bottom:4px; }

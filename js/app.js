@@ -522,7 +522,7 @@
     // つぎは何する？(バイラルCTA)
     html += '<div class="next-actions panel-reveal">' +
       '<p class="next-head">この診断、まわしてみて🍴</p>' +
-      '<button class="btn next-btn" id="naInvite">友だちに送って当てさせる</button>' +
+      '<button class="btn next-btn" id="naInvite">友だちに当ててもらう🍴</button>' +
       '<button class="btn next-btn" id="naShare">Xでシェアする</button>' +
       '</div>';
 
@@ -579,7 +579,7 @@
     var naInvite = $('naInvite');
     if (naInvite) naInvite.addEventListener('click', function () {
       track('share', t.id, { method: 'invite' });
-      copyText('この診断、あなたはなに味？→ ' + shareUrl(t.id) + ' #フレーバー診断', 'おさそい文をコピー！友だちに送ってね');
+      copyText('私の味、当ててみて！16味のうちどれでしょう👀→ ' + guessUrl(t.id) + ' #フレーバー診断', 'おさそい文をコピー！友だちに送って当ててもらおう🍴');
     });
 
     var btnCopyEmoji = $('btnCopyEmoji');
@@ -599,6 +599,15 @@
   function shareUrl(id) {
     if (location.protocol.indexOf('http') === 0) return location.origin + '/t/' + id + '/';
     return location.href; // file:// 等のフォールバック
+  }
+  // 当てゲーム用URL: 答えを軽く隠して /?g=<token> を渡す(プレビューはデフォルトOGで答えを出さない)
+  function guessUrl(id) {
+    if (location.protocol.indexOf('http') === 0) {
+      var token = id;
+      try { token = btoa(id); } catch (e) { token = id; }
+      return location.origin + '/?g=' + encodeURIComponent(token);
+    }
+    return location.href;
   }
 
   // 計測ビーコン(Cloudflare Functions /api/ev へ。未デプロイ環境では黙って失敗)
@@ -706,6 +715,54 @@
     if (lastFocus) { try { lastFocus.focus(); } catch (e) {} lastFocus = null; }
   }
 
+  /* ---------- 当てゲーム(?g=) ---------- */
+  function openGuess(answerId) {
+    if (!TYPES[answerId]) { showScreen('landing'); return; }
+    hideBanner();
+    track('guess_open', answerId);
+    var grid = $('guessGrid');
+    if (grid) {
+      grid.innerHTML = TYPE_ORDER.map(function (tid) {
+        var t = TYPES[tid];
+        return '<button class="menu-item" data-type="' + tid + '" style="--c:' + t.color + '" aria-label="' + t.name + 'を選ぶ">' +
+          '<span class="menu-char" aria-hidden="true">' + t.svg + '</span>' +
+          '<span class="menu-name">' + t.short + '</span>' +
+          '</button>';
+      }).join('');
+      delete grid.dataset.done;
+      grid.onclick = function (ev) {
+        var btn = ev.target.closest('.menu-item');
+        if (btn && !grid.dataset.done) { grid.dataset.done = '1'; submitGuess(btn.dataset.type, answerId); }
+      };
+    }
+    showScreen('guess');
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  function submitGuess(guessId, answerId) {
+    var correct = guessId === answerId;
+    window.haptic(correct ? [18, 40, 28] : 12);
+    track('guess_submit', answerId, { correct: correct ? 1 : 0 });
+    track('viewer_result', answerId);
+    renderResult(answerId, { mine: false });
+    showScreen('result');
+    try { window.scrollTo(0, 0); } catch (e) {}
+    var t = TYPES[answerId];
+    var guessName = TYPES[guessId] ? TYPES[guessId].short : '';
+    var banner = $('viewerBanner');
+    if (banner) {
+      banner.innerHTML =
+        '<p class="guess-verdict">' + (correct ? '🎉 大当たり！' : 'ざんねん…！') + '</p>' +
+        '<p>友だちは「<b>' + t.name + '</b>」でした。' +
+        (correct ? 'よく分かってる〜！' : '（あなたの予想は「' + guessName + '」）') +
+        '<br>じゃあ、あなたはなに味？</p>' +
+        '<button class="btn btn-primary" id="btnViewerStartTop">自分の味を診断する（約2分）</button>';
+      banner.classList.remove('hidden');
+      var b = $('btnViewerStartTop');
+      if (b) b.addEventListener('click', function () { track('viewer_start', answerId); startQuiz(); });
+    }
+  }
+
   /* ---------- 初期化 ---------- */
   function init() {
     // ロゴを1文字ずつspan化
@@ -802,12 +859,18 @@
     });
 
     // URLパラメータ
-    var tid = null, me = false;
+    var tid = null, me = false, g = null;
     try {
       var sp = new URLSearchParams(location.search);
+      g = sp.get('g');
       tid = sp.get('t');
       me = sp.get('me') === '1';
     } catch (e) {}
+    if (g) {
+      var gid = g;
+      try { gid = atob(g); } catch (e) { gid = g; }
+      if (gid && TYPES[gid]) { openGuess(gid); return; }
+    }
     if (tid && TYPES[tid]) openShared(tid, me);
   }
 
