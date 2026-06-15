@@ -13,7 +13,7 @@ const { TYPES, TYPE_ORDER } = require('./js/data.js');
 
 const ORIGIN = 'https://flavorshindan.com';
 const ROOT = __dirname;
-const VER = '9';
+const VER = '10';
 
 // レア度ランキング(希少なほど上位)
 const RANKED = TYPE_ORDER.slice().sort((a, b) => TYPES[a].rarity - TYPES[b].rarity);
@@ -129,7 +129,7 @@ function pageHTML(t) {
   ${cardHTML(t)}
   <div class="tp-cta">
     <p class="tp-cta-head">あなたはなに味？🍴</p>
-    <a class="btn btn-primary btn-big" href="/">20問・約2分で診断する</a>
+    <a class="btn btn-primary btn-big" href="/">24問・約2分で診断する</a>
     <a class="btn" href="/?t=${t.id}">この味を詳しく見る</a>
   </div>
   ${bodyPanels(t)}

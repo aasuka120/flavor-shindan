@@ -77,6 +77,28 @@
       return null;
     } catch (e) { return null; }
   }
+  function getMyMbti() {
+    try {
+      var m = JSON.parse(lsGet('flavor_my_mbti'));
+      if (m && typeof m.type === 'string' && Array.isArray(m.parts)) return m;
+      return null;
+    } catch (e) { return null; }
+  }
+
+  // MBTI(回答から算出): E/I=濃さ(軸0) S/N=軸4(新規) T/F=後味(軸2) J/P=入手性(軸3)。温度(軸1)は不使用
+  function computeMbti(sums) {
+    function part(sum, max, pos, neg, posLabel, negLabel) {
+      var p = Math.round((((sum || 0) + max) / (2 * max)) * 100);
+      if (p > 100) p = 100; if (p < 0) p = 0;
+      var toPos = p >= 50;
+      return { letter: toPos ? pos : neg, pct: toPos ? p : 100 - p, pos: pos, neg: neg, posLabel: posLabel, negLabel: negLabel };
+    }
+    var ei = part(sums[0], 10, 'E', 'I', '外向', '内向');
+    var sn = part(sums[4], 8,  'S', 'N', '感覚', '直観');
+    var tf = part(sums[2], 10, 'F', 'T', '感情', '思考');
+    var jp = part(sums[3], 10, 'J', 'P', '計画', '臨機');
+    return { type: ei.letter + sn.letter + tf.letter + jp.letter, parts: [ei, sn, tf, jp] };
+  }
 
   /* ---------- クイズ ---------- */
   function startQuiz() {
@@ -159,7 +181,10 @@
 
   /* ---------- 集計 ---------- */
   function finish() {
-    var sums = AXES.map(function () { return 0; });
+    var nAxis = AXES.length;
+    QUESTIONS.forEach(function (q) { if (q.axis + 1 > nAxis) nAxis = q.axis + 1; });
+    var sums = [];
+    for (var si = 0; si < nAxis; si++) sums.push(0);
     QUESTIONS.forEach(function (q, i) {
       sums[q.axis] += (q.dir === 'a' ? answers[i] : -answers[i]);
     });
@@ -179,15 +204,17 @@
     Object.keys(TYPES).forEach(function (k) { if (TYPES[k].axes === code) id = k; });
     if (!id || !TYPES[id]) id = TYPE_ORDER[0]; // 念のためのフォールバック(白画面化を防ぐ)
 
-    var mix = sums.map(function (s) {
-      return Math.max(0, Math.min(100, Math.round((s + 10) / 20 * 100)));
+    var mix = AXES.map(function (ax, i) {
+      return Math.max(0, Math.min(100, Math.round((sums[i] + 10) / 20 * 100)));
     });
+    var mbti = computeMbti(sums);
 
     // 前回の結果を退避してから保存
     var prev = getMyType();
     if (prev && prev !== id) lsSet('flavor_prev_type', prev);
     lsSet('flavor_my_type', id);
     lsSet('flavor_my_mix', JSON.stringify(mix));
+    lsSet('flavor_my_mbti', JSON.stringify(mbti));
     track('quiz_complete', id);
     try { history.replaceState(null, '', '?t=' + id + '&me=1'); } catch (e) {}
 
@@ -203,7 +230,7 @@
     var done = setTimeout(function () {
       clearInterval(rot);
       if (!$('screen-loading').classList.contains('active')) return; // 離脱していたら何もしない
-      renderResult(id, { mine: true, mix: mix });
+      renderResult(id, { mine: true, mix: mix, mbti: mbti });
       showScreen('result');
     }, 2400);
     loadTimers.push(done);
@@ -229,6 +256,8 @@
     lines.push(sub);
     var ml = mixLabel(mix);
     if (ml) lines.push(ml + 'の味らしい。');
+    var mb = getMyMbti();
+    if (mb && mb.type) lines.push('MBTIは ' + mb.type + ' っぽい。');
     lines.push('あなたはなに味？ #フレーバー診断');
     return lines.join('\n');
   }
@@ -293,6 +322,7 @@
     if (!TYPES[id]) { toast('うまく調理できなかった…もう一回！'); showScreen('landing'); return; }
     var mine = opts.mine;
     var mix = opts.mix;
+    var mbti = opts.mbti || (mine ? getMyMbti() : null);
     var t = TYPES[id];
     var best = TYPES[t.bestId] || t;
     var worst = TYPES[t.worstId] || t;
@@ -433,10 +463,25 @@
         '</div>', t.color);
     }
 
-    // ⑰ MBTI
-    html += panel('この味に多いMBTI',
-      '<div class="chips">' + t.mbti.map(function (m) { return '<span class="chip">' + m + '</span>'; }).join('') + '</div>' +
-      '<p class="chips-note">※体感です。MBTI警察の方は見逃してください🙏</p>', t.color);
+    // ⑰ MBTI(本人は回答から算出 / 閲覧者・履歴なしはこの味に多い型)
+    if (mine && mbti && mbti.parts) {
+      var bars = mbti.parts.map(function (pt) {
+        var leftOn = pt.letter === pt.pos;
+        return '<div class="mbti-row">' +
+          '<span class="mbti-pole' + (leftOn ? ' on' : ' dim') + '">' + pt.posLabel + ' ' + pt.pos + (leftOn ? ' <b>' + pt.pct + '%</b>' : '') + '</span>' +
+          '<span class="mbti-track"><span class="mbti-fill" style="width:' + pt.pct + '%;' + (leftOn ? 'left:0' : 'right:0') + '"></span></span>' +
+          '<span class="mbti-pole r' + (!leftOn ? ' on' : ' dim') + '">' + (!leftOn ? '<b>' + pt.pct + '%</b> ' : '') + pt.neg + ' ' + pt.negLabel + '</span>' +
+        '</div>';
+      }).join('');
+      html += panel('あなたのMBTIっぽさ',
+        '<div class="mbti-type">' + mbti.type + '</div>' +
+        '<div class="mbti-bars">' + bars + '</div>' +
+        '<p class="chips-note">あなたの回答からの推定。この味に多いのは ' + t.mbti.join(' / ') + '。当たってたらシェアしてね🙏</p>', t.color);
+    } else {
+      html += panel('この味に多いMBTI',
+        '<div class="chips">' + t.mbti.map(function (m) { return '<span class="chip">' + m + '</span>'; }).join('') + '</div>' +
+        '<p class="chips-note">※体感です。MBTI警察の方は見逃してください🙏</p>', t.color);
+    }
 
     // ⑱ bio用おみやげ
     html += panel('bio用おみやげ',

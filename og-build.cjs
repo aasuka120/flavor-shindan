@@ -166,7 +166,7 @@ async function drawDefault() {
   ctx.fillText('あなたを“味”にたとえると？', 600, 440);
 
   ctx.font = `700 27px ${FONT}`;
-  ctx.fillText('全20問 ・ 約2分 ・ 登録なし ・ #フレーバー診断', 600, 492);
+  ctx.fillText('全24問 ・ 約2分 ・ 登録なし ・ #フレーバー診断', 600, 492);
   ctx.fillStyle = 'rgba(58,44,35,.6)'; ctx.font = `700 24px ${FONT}`;
   ctx.fillText('flavorshindan.com', 600, 532);
   return canvas;
