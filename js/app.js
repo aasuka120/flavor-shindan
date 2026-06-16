@@ -675,29 +675,42 @@
   }
 
   // 共有用URL: タイプ別の静的ページ /t/{id}/ を指す(SNSでプレビューが出る経路)
+  // 現在ページのディレクトリを基準にする(GitHub Pages のサブパス /flavor-shindan/ でも、Cloudflareのルートでも正しく動く)
+  function siteBase() {
+    if (location.protocol.indexOf('http') !== 0) return null; // file:// 等
+    return location.origin + location.pathname.replace(/[^/]*$/, '');
+  }
+  // URLセーフbase64(+ / = を避ける。共有経路で + が空白化して壊れるのを防止)
+  function b64url(s) {
+    try { return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+    catch (e) { return encodeURIComponent(s); }
+  }
+  function b64urlDecode(t) {
+    try {
+      var s = String(t).replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      return atob(s);
+    } catch (e) { return null; }
+  }
   function shareUrl(id) {
-    if (location.protocol.indexOf('http') === 0) return location.origin + '/t/' + id + '/';
-    return location.href; // file:// 等のフォールバック
+    var base = siteBase();
+    return base ? base + 't/' + id + '/' : location.href; // file:// 等のフォールバック
   }
   // 当てゲーム用URL: 答えを軽く隠して /?g=<token> を渡す(プレビューはデフォルトOGで答えを出さない)
   function guessUrl(id) {
-    if (location.protocol.indexOf('http') === 0) {
-      var token = id;
-      try { token = btoa(id); } catch (e) { token = id; }
-      return location.origin + '/?g=' + encodeURIComponent(token);
-    }
-    return location.href;
+    var base = siteBase();
+    if (!base) return location.href;
+    return base + '?g=' + encodeURIComponent(b64url(id));
   }
 
   // デュオ(相性): id + mix(4軸%) をトークン化/復元
   function duoToken(id, mix) {
-    var raw = id + '~' + (mix || []).join('.');
-    try { return btoa(raw); } catch (e) { return raw; }
+    return b64url(id + '~' + (mix || []).join('.'));
   }
   function parseDuoToken(tok) {
     if (!tok) return null;
-    var raw = tok;
-    try { raw = atob(tok); } catch (e) { raw = tok; }
+    var raw = b64urlDecode(tok);
+    if (!raw) raw = tok; // 後方互換(生文字列)
     var parts = String(raw).split('~');
     var id = parts[0];
     if (!TYPES[id]) return null;
@@ -706,12 +719,11 @@
     return { id: id, mix: mix };
   }
   function duoUrl(id, mix, withTok) {
-    if (location.protocol.indexOf('http') === 0) {
-      var u = location.origin + '/?duo=' + encodeURIComponent(duoToken(id, mix));
-      if (withTok) u += '&with=' + encodeURIComponent(withTok);
-      return u;
-    }
-    return location.href;
+    var base = siteBase();
+    if (!base) return location.href;
+    var u = base + '?duo=' + encodeURIComponent(duoToken(id, mix));
+    if (withTok) u += '&with=' + encodeURIComponent(withTok);
+    return u;
   }
 
   // 計測ビーコン(Cloudflare Functions /api/ev へ。未デプロイ環境では黙って失敗)
@@ -1061,8 +1073,7 @@
       if (pa) { startDuoOnboarding(pa); return; }
     }
     if (g) {
-      var gid = g;
-      try { gid = atob(g); } catch (e) { gid = g; }
+      var gid = b64urlDecode(g) || g;
       if (gid && TYPES[gid]) { openGuess(gid); return; }
     }
     if (tid && TYPES[tid]) openShared(tid, me);
