@@ -227,6 +227,8 @@
     try { history.replaceState(null, '', '?t=' + id + '&me=1'); } catch (e) {}
 
     showScreen('loading');
+    var cooking = document.querySelector('#screen-loading .cooking');
+    if (cooking) cooking.classList.remove('done');
     var mi = 0;
     $('cookingMsg').textContent = LOADING_MSGS[0];
     var rot = setInterval(function () {
@@ -235,12 +237,21 @@
       $('cookingMsg').textContent = LOADING_MSGS[mi];
     }, 600);
     loadTimers.push(rot);
+    // 完成の合図(できあがり！)— 鍋がポンと跳ねて湯気＆ハプティック
+    var fin = setTimeout(function () {
+      clearInterval(rot);
+      if (!$('screen-loading').classList.contains('active')) return;
+      if (cooking) cooking.classList.add('done');
+      $('cookingMsg').textContent = '✨ できあがり！ ✨';
+      window.haptic([12, 28, 12, 28, 45]);
+    }, 1900);
+    loadTimers.push(fin);
     var done = setTimeout(function () {
       clearInterval(rot);
       if (!$('screen-loading').classList.contains('active')) return; // 離脱していたら何もしない
       renderResult(id, { mine: true, mix: mix, mbti: mbti });
       showScreen('result');
-    }, 2400);
+    }, 2550);
     loadTimers.push(done);
   }
 
