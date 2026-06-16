@@ -96,6 +96,8 @@ function pageHTML(t) {
   gtag('js', new Date());
   gtag('config', 'G-8VBGJTD06T');
 </script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3604468161854488" crossorigin="anonymous"></script>
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${url}">
