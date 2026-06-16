@@ -696,18 +696,16 @@
 
   /* ---------- パネル段階登場 ---------- */
   function revealPanels() {
+    // スクロール待ちにせず、読み込み時に全パネルを確実に表示する(同期付与)。
+    // (下にコンテンツがあると気づかずスクロールしない人がいたため)
     var panels = document.querySelectorAll('#resultBody .panel-reveal');
-    if (REDUCE || !('IntersectionObserver' in window)) {
-      panels.forEach(function (p) { p.classList.add('in'); });
-      return;
+    if (!panels.length) return;
+    if (!REDUCE) {
+      // 軽い上→下カスケード(遅延は上限0.4s)。表示中ならリフロー強制でフェードが走る
+      panels.forEach(function (p, i) { p.style.transitionDelay = Math.min(i * 0.04, 0.4) + 's'; });
+      void document.body.offsetHeight;
     }
-    if (revealObserver) revealObserver.disconnect();
-    revealObserver = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('in'); revealObserver.unobserve(e.target); }
-      });
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
-    panels.forEach(function (p) { revealObserver.observe(p); });
+    panels.forEach(function (p) { p.classList.add('in'); });
   }
 
   /* ---------- コピー(多段フォールバック) ---------- */
