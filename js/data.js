@@ -874,7 +874,68 @@ const LOADING_MSGS = [
   '盛り付けています…',
 ];
 
+/* =========================================================
+   デュオモード(2人の相性)
+   ========================================================= */
+// 2人の mix(4軸%)から相性を算出。温度=同調が良い / 濃さ・後味・入手性=補完が良い(pairScore思想の数値版)
+function computeCompat(mixA, mixB) {
+  function clean(m) {
+    var out = [50, 50, 50, 50], i, v;
+    if (m && m.length) {
+      for (i = 0; i < 4; i++) { v = Number(m[i]); if (isNaN(v)) v = 50; if (v < 0) v = 0; if (v > 100) v = 100; out[i] = v; }
+    }
+    return out;
+  }
+  var A = clean(mixA), B = clean(mixB);
+  var SIMILAR_GOOD = [false, true, false, false]; // 温度(index1)だけ同調が良い
+  var WEIGHT = [25, 35, 22, 18];
+  var axisCmp = [], raw = 0, oppositeCount = 0, similarCount = 0;
+  var i, diff, sub, rel;
+  for (i = 0; i < 4; i++) {
+    diff = Math.abs(A[i] - B[i]);
+    sub = SIMILAR_GOOD[i] ? (1 - diff / 100) : (diff / 100);
+    raw += sub * WEIGHT[i];
+    rel = (diff < 38) ? 'similar' : 'opposite'; // 値が近い=似てる/離れてる=正反対(中立50付近の誤判定を回避)
+    if (rel === 'opposite' && diff >= 40) oppositeCount++;
+    if (rel === 'similar' && diff <= 25) similarCount++;
+    axisCmp.push({ axis: i, relation: rel, diff: Math.round(diff) });
+  }
+  var score = Math.round(40 + raw * 0.57);
+  if (score < 40) score = 40;
+  if (score > 97) score = 97;
+  var bothHot = (A[1] >= 55 && B[1] >= 55);
+  var bothCool = (A[1] <= 45 && B[1] <= 45);
+  var category;
+  if (score >= 85) category = 'golden';
+  else if (oppositeCount >= 3) category = 'complement';
+  else if (bothHot && score >= 60) category = 'hype';
+  else if (bothCool && score < 60) category = 'cooldown';
+  else if (similarCount >= 3) category = 'kindred';
+  else if (score < 58) category = 'spice';
+  else if (oppositeCount >= 2) category = 'complement';
+  else category = 'kindred';
+  return { score: score, axisCmp: axisCmp, category: category };
+}
+
+// デュオ結果のコピー(関係名・寸評・軸別ひとこと)
+var DUO = {
+  cats: {
+    golden:     { name: '神レシピ',         emoji: '🏆', verdict: '何味と何味でも、混ぜたら優勝。理由を考える前にもう美味い、それがこの2人。' },
+    complement: { name: '凸凹で完全食',     emoji: '🧩', verdict: '足りないとこ、お互いが平然と持ってる。だから抜けられない。' },
+    kindred:    { name: '説明いらない2人',  emoji: '🍵', verdict: 'もう「それな」で会話の9割が終わる、ツーカーの2人。' },
+    hype:       { name: '二人で祭り確定',   emoji: '🔥', verdict: '両方ホットで、合流した瞬間その場がイベント化。「今から行く？」の発信源、たぶん両方。' },
+    spice:      { name: '火花散るけど旨い', emoji: '🌶️', verdict: 'たまにバチっとぶつかる。でもそのピリ辛が、お互いいちばんの刺激になってる。' },
+    cooldown:   { name: '省エネ最強ペア',   emoji: '🧊', verdict: 'お互い誘い待ち。なのに会えた日だけ、なぜか妙にラク。' }
+  },
+  axis: [
+    { similar: '感情の出し方が同じ温度。盛り上がりも落ち込みも、いちいち合う。', opposite: '感情だだ漏れ × ポーカーフェイス。片方が暴れて、片方が冷ます。' },
+    { similar: '同じテンションだから、一緒にいて疲れない。', opposite: '連れ出す人と、家が好きな人。引っぱって、引きとめて、ちょうどいい。' },
+    { similar: '言葉の温度が同じ。気のつかい加減が合うから、地雷を踏まない。', opposite: '甘やかす人と、締める人。ボケとツッコミ、片方欠けると成立しない。' },
+    { similar: '動き方がそっくり。決めて動くか、ノリで動くか、とにかくズレない。', opposite: '計画派と衝動派。アクセルとブレーキ、両方あって進む。' }
+  ]
+};
+
 /* Node(ビルドスクリプト)からも読めるように。ブラウザでは module が未定義なので無視される */
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { AXES, QUESTIONS, TYPES, TYPE_ORDER, LOADING_MSGS, pairScore };
+  module.exports = { AXES, QUESTIONS, TYPES, TYPE_ORDER, LOADING_MSGS, pairScore, computeCompat, DUO };
 }

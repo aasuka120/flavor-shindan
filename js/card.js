@@ -436,5 +436,167 @@
     }
   })();
 
-  window.FlavorCard = { build: build, save: save };
+  /* ---------- デュオ(相性)カード ---------- */
+  function mix2(h1, h2) {
+    function v(h) { h = String(h).replace('#', ''); if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; var n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+    var c1 = v(h1), c2 = v(h2);
+    return 'rgb(' + Math.round((c1[0] + c2[0]) / 2) + ',' + Math.round((c1[1] + c2[1]) / 2) + ',' + Math.round((c1[2] + c2[2]) / 2) + ')';
+  }
+  function heartPath(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.moveTo(x, y + r * 0.78);
+    ctx.bezierCurveTo(x + r, y - r * 0.2, x + r * 0.55, y - r, x, y - r * 0.32);
+    ctx.bezierCurveTo(x - r * 0.55, y - r, x - r, y - r * 0.2, x, y + r * 0.78);
+    ctx.closePath();
+  }
+  function scoreWord(s) { return s >= 90 ? 'ばつぐん！' : s >= 75 ? 'いいかんじ' : s >= 55 ? 'なかなか' : s >= 45 ? 'これから' : 'スパイス強め'; }
+  function wrapText(ctx, text, font, maxW, maxLines) {
+    ctx.font = font;
+    var chars = String(text).split(''), lines = [], cur = '', i;
+    for (i = 0; i < chars.length; i++) {
+      if (ctx.measureText(cur + chars[i]).width > maxW && cur) { lines.push(cur); cur = ''; }
+      cur += chars[i];
+    }
+    if (cur) lines.push(cur);
+    if (lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      var last = lines[maxLines - 1];
+      while (ctx.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1);
+      lines[maxLines - 1] = last + '…';
+    }
+    return lines;
+  }
+  function drawDuoPill(ctx, px, left, sym, symColor, right) {
+    rr(ctx, px, 1530, 384, 64, 32);
+    ctx.fillStyle = WHITE; ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.stroke();
+    ctx.font = '900 26px "Zen Maru Gothic"';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = INK; ctx.fillText(left, px + 96, 1562, 150);
+    ctx.fillStyle = symColor; ctx.fillText(sym, px + 192, 1562);
+    ctx.fillStyle = INK; ctx.fillText(right, px + 288, 1562, 150);
+  }
+
+  function drawDuo(ctx, a, b, imgA, imgB, compat) {
+    var i, ang;
+    var LX = 320, RX = 760, CY = 600, CR = 168;
+
+    // 1. 背景: 左右2色グラデ + 白水玉
+    var bg = ctx.createLinearGradient(0, 0, W, 0);
+    bg.addColorStop(0, a.color); bg.addColorStop(0.42, tint(a.color, 0.12));
+    bg.addColorStop(0.58, tint(b.color, 0.12)); bg.addColorStop(1, b.color);
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.14)';
+    var row = 0;
+    for (var y = 0; y <= H + 92; y += 92, row++) { var off = (row % 2) ? 46 : 0; for (var x = off - 92; x <= W + 92; x += 92) { ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill(); } }
+
+    // 2. パネル
+    rr(ctx, 80, 126, 952, 1700, 46); ctx.fillStyle = 'rgba(58,44,35,.9)'; ctx.fill();
+    rr(ctx, 64, 110, 952, 1700, 46); ctx.fillStyle = CREAM; ctx.fill();
+    ctx.lineWidth = 9; ctx.strokeStyle = INK; ctx.stroke();
+    ctx.save(); rr(ctx, 86, 132, 908, 1656, 32); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(58,44,35,.55)'; ctx.setLineDash([10, 9]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = tint(a.color, 0.35); star(ctx, 134, 180, 14); star(ctx, 134, 1740, 14);
+    ctx.fillStyle = tint(b.color, 0.35); star(ctx, 946, 180, 14); star(ctx, 946, 1740, 14); ctx.restore();
+    drawTape(ctx, 255, 118, -18); drawTape(ctx, 840, 124, 15);
+
+    // 3. バナー
+    rr(ctx, 230, 174, 620, 72, 36); ctx.fillStyle = INK; ctx.fill();
+    ctx.fillStyle = CREAM; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 30px "Zen Maru Gothic"';
+    var banner = 'FLAVOR CHECK ✦ ふたりの相性';
+    if ('letterSpacing' in ctx) { ctx.letterSpacing = '5px'; ctx.fillText(banner, 540, 212); ctx.letterSpacing = '0px'; } else { ctx.fillText(banner.split('').join(' '), 540, 212); }
+
+    // 4. リード
+    ctx.fillStyle = INK; ctx.font = '900 38px "Zen Maru Gothic"'; ctx.fillText('ふたりのたべあわせ相性は', 540, 322);
+
+    // 5. キャラ2体(スカラップ→白円→SVG)
+    [[LX, a, imgA], [RX, b, imgB]].forEach(function (e) {
+      var cx = e[0], t = e[1], im = e[2];
+      var sc = tint(t.color, 0.75);
+      for (i = 0; i < 18; i++) { ang = i * Math.PI * 2 / 18; ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * (CR + 12), CY + Math.sin(ang) * (CR + 12), 18, 0, Math.PI * 2); ctx.fillStyle = sc; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(cx, CY, CR, 0, Math.PI * 2); ctx.fillStyle = WHITE; ctx.fill(); ctx.lineWidth = 7; ctx.strokeStyle = INK; ctx.stroke();
+      var s = CR * 2 - 14; ctx.drawImage(im, cx - s / 2, CY - s / 2, s, s);
+    });
+
+    // 6. 中央ハート(2色の中間色)
+    ctx.fillStyle = 'rgba(58,44,35,.25)'; heartPath(ctx, 544, 604, 46); ctx.fill();
+    ctx.fillStyle = mix2(a.color, b.color); heartPath(ctx, 540, 600, 46); ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = INK; heartPath(ctx, 540, 600, 46); ctx.stroke();
+
+    // 7. 各キャラ名(short)ラベル
+    [[LX, a], [RX, b]].forEach(function (e) {
+      var cx = e[0], t = e[1], nm = t.short, sz = 32; ctx.font = sz + 'px "Mochiy Pop One"';
+      while (ctx.measureText(nm).width > 380 && sz > 20) { sz -= 2; ctx.font = sz + 'px "Mochiy Pop One"'; }
+      var nw = Math.min(ctx.measureText(nm).width, 380);
+      rr(ctx, cx - (nw + 34) / 2, 824, nw + 34, 24, 12); ctx.fillStyle = tint(t.color, 0.5); ctx.fill();
+      ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nm, cx, 836, 380);
+    });
+
+    // 8. 相性ラベル + 特大%
+    ctx.fillStyle = INK; ctx.font = '900 30px "Zen Maru Gothic"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('相性', 540, 962);
+    var ptxt = compat.score + '%', psz = 150; ctx.font = psz + 'px "Mochiy Pop One"';
+    while (ctx.measureText(ptxt).width > 380 && psz > 96) { psz -= 6; ctx.font = psz + 'px "Mochiy Pop One"'; }
+    ctx.fillStyle = 'rgba(58,44,35,.28)'; ctx.fillText(ptxt, 544, 1086);
+    ctx.fillStyle = RED; ctx.fillText(ptxt, 540, 1080);
+    ctx.font = '900 28px "Zen Maru Gothic"'; ctx.fillStyle = INK; ctx.fillText(scoreWord(compat.score), 540, 1178);
+
+    // 9. 関係名スタンプ帯
+    ctx.font = '900 36px "Zen Maru Gothic"'; var ctt = '── ' + (compat.categoryName || '') + ' ──', csz = 36;
+    while (ctx.measureText(ctt).width > 780 && csz > 24) { csz -= 2; ctx.font = '900 ' + csz + 'px "Zen Maru Gothic"'; }
+    var cw = Math.min(ctx.measureText(ctt).width, 800);
+    rr(ctx, 540 - (cw + 72) / 2, 1222, cw + 72, 66, 33); ctx.fillStyle = mix2(a.color, b.color); ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = INK; ctx.stroke();
+    ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(58,44,35,.45)'; ctx.fillText(ctt, 541, 1257, 800); ctx.fillStyle = '#ffffff'; ctx.fillText(ctt, 540, 1255, 800);
+
+    // 10. 寸評(最大2行)
+    var vLines = wrapText(ctx, compat.verdict || '', '700 30px "Zen Maru Gothic"', 770, 2);
+    ctx.font = '700 30px "Zen Maru Gothic"'; ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (vLines.length <= 1) ctx.fillText(vLines[0] || '', 540, 1362, 800);
+    else { ctx.fillText(vLines[0], 540, 1340, 800); ctx.fillText(vLines[1], 540, 1384, 800); }
+
+    // 11. ふたりのペアピル
+    ctx.font = '900 28px "Zen Maru Gothic"'; ctx.fillStyle = 'rgba(58,44,35,.7)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('このふたり', 540, 1490);
+    drawDuoPill(ctx, 348, a.short, '♡', RED, b.short);
+
+    // 12. フッター
+    ctx.beginPath(); ctx.moveTo(140, 1716); ctx.lineTo(940, 1716); ctx.lineWidth = 3; ctx.setLineDash([2, 14]); ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'butt';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '44px "Mochiy Pop One"'; ctx.fillStyle = INK; ctx.fillText('フレーバー診断', 540, 1788);
+    ctx.font = '700 26px "Zen Maru Gothic"'; ctx.fillStyle = 'rgba(58,44,35,.6)'; ctx.fillText('#フレーバー診断 #ふたりの相性', 540, 1842);
+  }
+
+  async function buildDuo(a, b, compat) {
+    var sample = 'ふたりの相性FLAVOR CHECK 0123456789%相性このふたり' + a.name + b.name + a.short + b.short + (compat.categoryName || '') + (compat.verdict || '');
+    await Promise.all(FONT_SPECS.map(function (f) { return document.fonts.load(f, sample).catch(function () {}); }));
+    await document.fonts.ready;
+    var imgs = await Promise.all([svgToImage(a.svg), svgToImage(b.svg)]);
+    var canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    drawDuo(canvas.getContext('2d'), a, b, imgs[0], imgs[1], compat);
+    return canvas;
+  }
+
+  async function saveDuo(a, b, compat, share) {
+    if (typeof window.toast === 'function') window.toast('相性カードを焼いてます…');
+    var canvas = await buildDuo(a, b, compat);
+    var blob = await new Promise(function (resolve, reject) {
+      canvas.toBlob(function (bb) { if (bb) resolve(bb); else reject(new Error('PNGの生成に失敗しました')); }, 'image/png');
+    });
+    var file = new File([blob], 'flavor_duo.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      var payload = { files: [file], title: 'フレーバー診断 ふたりの相性' };
+      if (share) { if (share.text) payload.text = share.text; if (share.url) payload.url = share.url; }
+      try { await navigator.share(payload); }
+      catch (err) { if (!err || err.name !== 'AbortError') throw err; }
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = url;
+    var aEl = document.createElement('a');
+    aEl.href = url; aEl.download = file.name;
+    document.body.appendChild(aEl); aEl.click(); aEl.remove();
+    showModal(url);
+  }
+
+  window.FlavorCard = { build: build, save: save, buildDuo: buildDuo, saveDuo: saveDuo };
 })();

@@ -16,6 +16,7 @@
   var loadTimers = [];
   var revealObserver = null;
   var lastFocus = null;
+  var duoPartner = null; // ?duo= で受け取った相手(A) {id, mix}。診断完了時に相性を出す
 
   var REDUCE = false;
   try { REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
@@ -110,6 +111,7 @@
 
   /* ---------- クイズ ---------- */
   function startQuiz() {
+    duoPartner = null; // 通常診断では相手をクリア。デュオ用ボタンは startQuiz() の後に再セットする
     answers = [];
     index = 0;
     transitioning = false;
@@ -249,6 +251,11 @@
     var done = setTimeout(function () {
       clearInterval(rot);
       if (!$('screen-loading').classList.contains('active')) return; // 離脱していたら何もしない
+      if (duoPartner) {
+        var partner = duoPartner; duoPartner = null;
+        openDuoResult(partner, { id: id, mix: mix }, { youSecond: true });
+        return;
+      }
       renderResult(id, { mine: true, mix: mix, mbti: mbti });
       showScreen('result');
     }, 2550);
@@ -588,6 +595,7 @@
     // つぎは何する？(バイラルCTA)
     html += '<div class="next-actions panel-reveal">' +
       '<p class="next-head">この診断、まわしてみて🍴</p>' +
+      (mine && mix ? '<button class="btn next-btn" id="naDuo">友だちと相性をみる🍳</button>' : '') +
       '<button class="btn next-btn" id="naInvite">友だちに当ててもらう🍴</button>' +
       '<button class="btn next-btn" id="naShare">Xでシェアする</button>' +
       '</div>';
@@ -647,6 +655,11 @@
       track('share', t.id, { method: 'invite' });
       copyText('私の味、当ててみて！16味のうちどれでしょう👀→ ' + guessUrl(t.id) + ' #フレーバー診断', 'おさそい文をコピー！友だちに送って当ててもらおう🍴');
     });
+    var naDuo = $('naDuo');
+    if (naDuo) naDuo.addEventListener('click', function () {
+      track('duo_invite', t.id, { method: 'link' });
+      copyText('私『' + t.name + '味』だった。2人の相性みよ→ ' + duoUrl(t.id, mix) + ' #フレーバー診断', '相性リンクをコピー！友だちに送って相性をみよう🍳');
+    });
 
     var btnCopyEmoji = $('btnCopyEmoji');
     if (btnCopyEmoji) btnCopyEmoji.addEventListener('click', function () {
@@ -672,6 +685,31 @@
       var token = id;
       try { token = btoa(id); } catch (e) { token = id; }
       return location.origin + '/?g=' + encodeURIComponent(token);
+    }
+    return location.href;
+  }
+
+  // デュオ(相性): id + mix(4軸%) をトークン化/復元
+  function duoToken(id, mix) {
+    var raw = id + '~' + (mix || []).join('.');
+    try { return btoa(raw); } catch (e) { return raw; }
+  }
+  function parseDuoToken(tok) {
+    if (!tok) return null;
+    var raw = tok;
+    try { raw = atob(tok); } catch (e) { raw = tok; }
+    var parts = String(raw).split('~');
+    var id = parts[0];
+    if (!TYPES[id]) return null;
+    var mix = (parts[1] || '').split('.').map(function (n) { return Math.max(0, Math.min(100, Math.round(Number(n)))); });
+    if (mix.length !== 4 || mix.some(function (n) { return isNaN(n); })) mix = [50, 50, 50, 50];
+    return { id: id, mix: mix };
+  }
+  function duoUrl(id, mix, withTok) {
+    if (location.protocol.indexOf('http') === 0) {
+      var u = location.origin + '/?duo=' + encodeURIComponent(duoToken(id, mix));
+      if (withTok) u += '&with=' + encodeURIComponent(withTok);
+      return u;
     }
     return location.href;
   }
@@ -827,6 +865,90 @@
     }
   }
 
+  /* ---------- デュオモード(相性) ---------- */
+  // 相手リンク(?duo=)で来た人を診断に誘導。診断完了時に finish() が相性を出す
+  function startDuoOnboarding(a) {
+    if (!TYPES[a.id]) { showScreen('landing'); return; }
+    duoPartner = a;
+    track('duo_open', a.id);
+    showScreen('landing');
+    var banner = $('viewerBanner');
+    if (banner) {
+      banner.innerHTML =
+        '<p class="duo-onboard">友だちは「<b>' + TYPES[a.id].name + '</b>」だったみたい（全国の' + TYPES[a.id].rarity + '%）。<br>あなたは何味？ 混ぜたら2人の相性が出るよ🍳</p>' +
+        '<button class="btn btn-primary" id="btnDuoStart">混ぜてみる🍳（あなたの味も出る）</button>';
+      banner.classList.remove('hidden');
+      var b = $('btnDuoStart');
+      if (b) b.addEventListener('click', function () { startQuiz(); duoPartner = a; });
+    }
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  // 2人の相性結果画面。a/b = {id, mix}。opts.youSecond(=bが自分) / opts.direct(=共有リンク閲覧)
+  function openDuoResult(a, b, opts) {
+    opts = opts || {};
+    if (!TYPES[a.id] || !TYPES[b.id]) { showScreen('landing'); return; }
+    hideBanner();
+    var ta = TYPES[a.id], tb = TYPES[b.id];
+    var compat = computeCompat(a.mix, b.mix);
+    var cat = DUO.cats[compat.category] || DUO.cats.kindred;
+    // 最も決定的な3軸(はっきり似てる/正反対)のひとこと
+    var lines = compat.axisCmp.slice().sort(function (x, y) {
+      return Math.abs(y.diff - 50) - Math.abs(x.diff - 50);
+    }).slice(0, 3).map(function (c) { return DUO.axis[c.axis][c.relation]; });
+
+    var youTag = '<span class="duo-you">あなた</span>';
+    var html =
+      '<p class="duo-head">ふたりの相性</p>' +
+      '<div class="duo-pair">' +
+        '<div class="duo-side"><div class="duo-char" role="img" aria-label="' + ta.name + '">' + ta.svg + '</div><p class="duo-name">' + ta.short + '</p></div>' +
+        '<div class="duo-heart" aria-hidden="true">♡</div>' +
+        '<div class="duo-side">' + (opts.youSecond ? youTag : '') + '<div class="duo-char" role="img" aria-label="' + tb.name + '">' + tb.svg + '</div><p class="duo-name">' + tb.short + '</p></div>' +
+      '</div>' +
+      '<div class="duo-score-wrap" style="--ca:' + ta.color + ';--cb:' + tb.color + '">' +
+        '<p class="duo-score-lb">相性</p>' +
+        '<div class="duo-score">' + compat.score + '<span>%</span></div>' +
+        '<div class="duo-cat">' + cat.emoji + ' ' + cat.name + '</div>' +
+      '</div>' +
+      '<p class="duo-verdict">' + cat.verdict + '</p>' +
+      '<ul class="duo-axis">' + lines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>' +
+      '<div class="duo-actions">' +
+        '<button class="btn btn-primary" id="duoSave">相性カードを保存／シェア</button>' +
+        '<button class="btn" id="duoCopy">相性リンクをコピー</button>' +
+        (opts.youSecond ? '<button class="btn" id="duoMine">自分の結果をくわしく見る</button>' : '<button class="btn" id="duoStart">自分も診断する</button>') +
+      '</div>' +
+      '<a class="duo-back" id="duoHome" href="/">← トップへ</a>';
+    $('screen-duo').innerHTML = html;
+    showScreen('duo');
+    try { document.title = ta.short + ' × ' + tb.short + ' 相性' + compat.score + '%｜フレーバー診断'; } catch (e) {}
+    track(opts.direct ? 'duo_view' : 'duo_complete', b.id, { compat: compat.score });
+
+    var shareLink = duoUrl(a.id, a.mix, duoToken(b.id, b.mix));
+    var shareText = ta.short + ' × ' + tb.short + ' = 相性' + compat.score + '%だった🍳\nあなたは誰と何味？\n#フレーバー診断';
+
+    var save = $('duoSave');
+    if (save) save.addEventListener('click', function () {
+      track('duo_share', b.id, { method: 'card' });
+      FlavorCard.saveDuo(ta, tb, { score: compat.score, categoryName: cat.name, verdict: cat.verdict, axisLines: lines }, { text: shareText, url: shareLink })
+        .catch(function (e) { if (e && e.name !== 'AbortError') toast('うまく焼けなかった…もう一回試して！'); });
+    });
+    var copy = $('duoCopy');
+    if (copy) copy.addEventListener('click', function () {
+      track('duo_share', b.id, { method: 'link' });
+      copyText(shareText + '\n' + shareLink, 'コピーしたよ！送ると2人の相性ページが開くよ🍳');
+    });
+    var mine = $('duoMine');
+    if (mine) mine.addEventListener('click', function () {
+      renderResult(b.id, { mine: true, mix: b.mix, mbti: getMyMbti() });
+      showScreen('result');
+    });
+    var st = $('duoStart');
+    if (st) st.addEventListener('click', function () { startQuiz(); }); // 第三者は自分の診断へ(新規獲得)。startQuizがduoPartnerをクリア
+    var home = $('duoHome');
+    if (home) home.addEventListener('click', function (e) { e.preventDefault(); hideBanner(); showScreen('landing'); });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
   /* ---------- 初期化 ---------- */
   function init() {
     // ロゴを1文字ずつspan化
@@ -923,13 +1045,21 @@
     });
 
     // URLパラメータ
-    var tid = null, me = false, g = null;
+    var tid = null, me = false, g = null, duoTok = null, withTok = null;
     try {
       var sp = new URLSearchParams(location.search);
+      duoTok = sp.get('duo');
+      withTok = sp.get('with');
       g = sp.get('g');
       tid = sp.get('t');
       me = sp.get('me') === '1';
     } catch (e) {}
+    if (duoTok) {
+      var pa = parseDuoToken(duoTok);
+      var pb = withTok ? parseDuoToken(withTok) : null;
+      if (pa && pb) { openDuoResult(pa, pb, { direct: true }); return; }
+      if (pa) { startDuoOnboarding(pa); return; }
+    }
     if (g) {
       var gid = g;
       try { gid = atob(g); } catch (e) { gid = g; }
