@@ -818,6 +818,25 @@
     }
   }
 
+  /* ---------- 激レアTOP3(射幸心ブースト) ---------- */
+  function renderRareTop() {
+    var el = $('rareTopGrid');
+    if (!el) return;
+    var top = RARITY_RANK.slice(0, 3); // レア度の高い(希少な)順トップ3
+    el.innerHTML = top.map(function (tid, i) {
+      var t = TYPES[tid];
+      return '<button class="rare-card rank' + (i + 1) + '" data-type="' + tid + '" style="--c:' + t.color + '" aria-label="' + t.name + '（全国の' + t.rarity + '%）をみる">' +
+        '<span class="rare-badge" aria-hidden="true">激レア</span>' +
+        '<span class="rare-rank">' + (i === 0 ? '👑 ' : '') + (i + 1) + '位</span>' +
+        '<span class="rare-char" aria-hidden="true">' + t.svg + '</span>' +
+        '<span class="rare-name">' + t.short + '</span>' +
+        '<span class="rare-pct">' + t.rarity + '%</span>' +
+        '</button>';
+    }).join('');
+    var cta = $('rareTopCta');
+    if (cta) cta.textContent = '超激レアはたった' + TYPES[top[0]].rarity + '%。あなたは引ける？🎰';
+  }
+
   /* ---------- 初期化 ---------- */
   function init() {
     // ロゴを1文字ずつspan化
@@ -873,6 +892,14 @@
         if (btn) viewType(btn.dataset.type);
       });
     }
+
+    // 激レアTOP3
+    var rtg = $('rareTopGrid');
+    if (rtg) rtg.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.rare-card');
+      if (btn) viewType(btn.dataset.type);
+    });
+    renderRareTop();
 
     // 固定ボタン
     bind($('btnStart'), 'click', startQuiz);

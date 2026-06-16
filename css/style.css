@@ -1370,3 +1370,29 @@ a{ color:var(--ink); }
 .kakushi li{ position:relative; padding:9px 12px 9px 30px; font-size:13px; line-height:1.6; background:var(--paper); border-radius:10px; margin-bottom:8px; }
 .kakushi li:last-child{ margin-bottom:0; }
 .kakushi li::before{ content:'隠'; position:absolute; left:9px; top:9px; font-family:'Mochiy Pop One',sans-serif; font-size:11px; color:var(--red); }
+
+/* ===== 激レアTOP3(射幸心ブースト) ===== */
+.rare-top{ margin:14px 0 6px; text-align:center; }
+.rare-top-head{ font-family:'Mochiy Pop One',sans-serif; font-weight:400; font-size:18px; }
+.rare-top-head small{ display:block; font-family:'Zen Maru Gothic',sans-serif; font-size:11px; font-weight:900; color:var(--red); margin-top:2px; }
+.rare-top-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; align-items:end; margin-top:10px; }
+.rare-card{ position:relative; display:flex; flex-direction:column; align-items:center; border:3px solid #d89b2e; border-radius:14px; background:linear-gradient(160deg,#fff6da,#ffe6a6); box-shadow:3px 3px 0 var(--ink); padding:10px 4px 8px; cursor:pointer; transition:transform .12s ease; }
+.rare-card:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+.rare-card.rank1{ border-color:#c9402a; background:linear-gradient(160deg,#fff0bf,#ffd886); transform:scale(1.07); z-index:1; }
+.rare-card.rank1:active{ transform:scale(1.07) translate(2px,2px); }
+.rare-card::after{ content:''; position:absolute; inset:0; border-radius:11px; pointer-events:none; background:linear-gradient(115deg,transparent 36%,rgba(255,255,255,.7) 47%,rgba(150,220,255,.6) 50%,rgba(255,200,90,.6) 53%,transparent 65%); background-size:300% 300%; animation:holoShine 2.6s linear infinite; mix-blend-mode:screen; }
+.rare-rank{ font-family:'Mochiy Pop One',sans-serif; font-size:12px; color:var(--red); }
+.rare-card.rank1 .rare-rank{ font-size:14px; }
+.rare-char{ display:block; width:100%; }
+.rare-char svg{ display:block; width:100%; }
+.rare-name{ font-size:10px; font-weight:900; line-height:1.25; margin-top:2px; }
+.rare-pct{ font-family:'Mochiy Pop One',sans-serif; font-size:16px; color:#c9402a; }
+.rare-card.rank1 .rare-pct{ font-size:21px; }
+.rare-badge{ position:absolute; top:-6px; right:-4px; z-index:2; background:var(--red); color:#fff; font-size:8px; font-weight:900; padding:2px 5px; border-radius:6px; border:1.5px solid var(--ink); transform:rotate(8deg); }
+.rare-top-cta{ font-size:12px; font-weight:900; margin-top:9px; }
+
+/* メニューのレア枠ホログラム加工 */
+.menu-item.rare-s::after, .menu-item.rare-ss::after{ content:''; position:absolute; inset:0; border-radius:10px; pointer-events:none; background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.55) 47%,rgba(150,220,255,.5) 50%,rgba(255,205,110,.5) 53%,transparent 64%); background-size:300% 300%; animation:holoShine 3.2s linear infinite; mix-blend-mode:screen; }
+.menu-item.rare-ss::after{ animation-duration:2.4s; }
+@keyframes holoShine{ 0%{ background-position:120% 0%; } 100%{ background-position:-20% 100%; } }
+@media (prefers-reduced-motion: reduce){ .rare-card::after, .menu-item.rare-s::after, .menu-item.rare-ss::after{ animation:none; } }
